@@ -11,8 +11,8 @@ public class Adfgvx {
 	private final char[] KEY_CHARS = {'0','1','2','3','4','5','6','7','8','9',
 			'A','B','C','D','E','F','G','H','I','J','K','L','M',
 			'N','O','P','Q','R','S','T','U','V','W','X','Y','Z'};
-	private Map<String, Character> decryptMap;
-	private Map<Character, String> encryptMap;
+	private final Map<String, Character> decryptMap;
+	private final Map<Character, String> encryptMap;
 	private final char[] transpositionKey;
 	private final char[] sortedTranspKey; 
 
@@ -36,6 +36,8 @@ public class Adfgvx {
 		if(!substitutionKeyIsValid(substitutionKey) || !transpositionKeyIsValid(transpositionKey)) {
 			throw new IllegalArgumentException();
 		}
+		this.encryptMap = new HashMap<Character,String>();
+		this.decryptMap = new HashMap<String,Character>();
 		this.generateSubstTable(substitutionKey);
 		this.transpositionKey = transpositionKey.toCharArray();
 		this.sortedTranspKey = Arrays.copyOf(this.transpositionKey, this.transpositionKey.length);
@@ -108,20 +110,22 @@ public class Adfgvx {
 	 * @return the ADFGVX cryptogram
 	 */
 	public String encrypt(String textToEncrypt) {
-		textToEncrypt = cleanText(textToEncrypt);
+		textToEncrypt = cleanTextToCipher(textToEncrypt);
 		textToEncrypt = substituteText(textToEncrypt);
 		textToEncrypt = transposeText(textToEncrypt);
 		return textToEncrypt;
 	}
 	
 	/**
-	 * Nettoie le texte à chiffrer en ne concervant que les lettres et les chiffres.
+	 * Nettoie le texte à chiffrer en le rendant tout en majuscule et 
+	 * en ne concervant que les lettres majuscules et les chiffres
 	 * 
 	 * @param text le texte à nettoyer
 	 * @return le text nettoyé
 	 */
-	private String cleanText(String text) {
-		return text.replaceAll("[^a-zA-Z0-9]+", "");
+	private String cleanTextToCipher(String text) {
+		text = text.toUpperCase();
+		return text.replaceAll("[^A-Z0-9]+", "");
 	}
 	
 	/**
@@ -131,9 +135,10 @@ public class Adfgvx {
 	 * @return le texte substitué
 	 */
 	private String substituteText(String text) {
-		StringBuilder substText = new StringBuilder();
+		int sbCapacity = text.length() * 2;
+		StringBuilder substText = new StringBuilder(sbCapacity);
 		for(int i = 0; i < text.length(); ++i) {
-			String substBigram = encryptMap.get(substText.charAt(i));
+			String substBigram = encryptMap.get(text.charAt(i));
 			substText.append(substBigram);
 		}
 		return substText.toString();
@@ -206,7 +211,7 @@ public class Adfgvx {
 	}
 	
 	/**
-	 * Lit le tableau de transposition dans l'ordre alphabétique de la clé
+	 * Lit le tableau de transposition dans l'ordre alphabétique des lettres de la clé
 	 * pour en obtenir le message transposé.
 	 * 
 	 * @param tpKeyMap le tableau de transposition
@@ -215,8 +220,24 @@ public class Adfgvx {
 	 * @return le message transposé
 	 */
 	private String readTranspositionArray(Map<Character, char[]> tpKeyMap, int rowCount, int colCount) {
-		
-		return "";
+		int charCount = 0;
+		int tpArraySize = rowCount * colCount;
+		//Capacité du StringBuilder = nb de caractères dans le tableau + nb de tirets à rajouter entre groupe de 5 caractères
+		int sbCapacity = tpArraySize + (tpArraySize/5) - 1;
+		StringBuilder cypheredText = new StringBuilder(sbCapacity);
+		for(int rowNum = 0; rowNum < rowCount; ++rowNum) {
+			for(char sortedTpKeyChar : this.sortedTranspKey) {
+				char[] column = tpKeyMap.get(sortedTpKeyChar);
+				char nextChar = column[rowNum];
+				cypheredText.append(nextChar);
+				++charCount;
+				if(charCount == 5) {
+					cypheredText.append('-');
+					charCount = 0;
+				}
+			}
+		}
+		return cypheredText.toString();
 	}
 
 	/**
