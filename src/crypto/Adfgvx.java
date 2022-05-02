@@ -1,35 +1,99 @@
 package crypto;
 
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.Random;
 
 public class Adfgvx {
 	
 	private final char[] ADFGVX = {'A','D','F','G','V','X'};
-	private Map encryptMap;
-	private Map decryptMap;
-	private String transpositionKey;
+	private final char[] KEY_CHARS = {'0','1','2','3','4','5','6','7','8','9',
+			'A','B','C','D','E','F','G','H','I','J','K','L','M',
+			'N','O','P','Q','R','S','T','U','V','W','X','Y','Z'};
+	private Map<String, Character> decryptMap;
+	private Map<Character, String> encryptMap;
+	private final char[] transpositionKey;
+	private final char[] sortedTranspKey; 
+
 
 	/**
-	 * Constructor
+	 * Construit un objet Adfgvx qui permet de chiffrer ou déchiffrer un message selon
+	 * la méthode ADFGVX à partir d'une clé de substitution et d'une clé de transposition.
+	 * Si la clé de substitution ou la clé de transposition n'est pas valide,
+	 *  une IllegalArgumentException est lancée.
+	 * 
+	 * La clé de substitution est valide si elle contient tous les chiffres et
+	 * toutes les lettres majuscules sans répétition.
+	 * 
+	 * La clé de transposition est valide si elle ne contient que des lettres majuscules sans répétitions.
+	 * 
+	 * @param substitutionKey la clé de substitution
+	 * @param transpositionKey la clé de transposition
 	 */
 	public Adfgvx(String substitutionKey, String transpositionKey) {
 		// TODO
 		if(!substitutionKeyIsValid(substitutionKey) || !transpositionKeyIsValid(transpositionKey)) {
 			throw new IllegalArgumentException();
 		}
-		String[] substKeyRows = substitutionKey.split("",6);
-		
-		
+		this.generateSubstTable(substitutionKey);
+		this.transpositionKey = transpositionKey.toCharArray();
+		this.sortedTranspKey = Arrays.copyOf(this.transpositionKey, this.transpositionKey.length);
+		Arrays.sort(this.sortedTranspKey);
 	}
 	
+	/**
+	 * Retourne vrai si la clé de substitution est valide, sinon retourne faux.
+	 * La clé de substitution est valide si elle contient tous les chiffres et
+	 * toutes les lettres majuscules sans répétition.
+	 * 
+	 * @param substitutionKey la clé de substitution
+	 * @return vrai si la clé de substitution est valide, sinon faux
+	 */
 	private boolean substitutionKeyIsValid(String substitutionKey) {
-		boolean isValid = false;
-		isValid = substitutionKey.length() == 36;
-		return isValid;
+		return substitutionKey != null && substitutionKey.length() == 36 && this.containsAllDigitsAndLetters(substitutionKey);
 	}
 	
+	/**
+	 * Retourne vrai si la clé de substitution contient tous les chiffres et toutes les lettres. 
+	 * 
+	 * @param substitutionKey la clé de substitution
+	 * @return vrai si la clé de substitution contient tous les chiffres et toutes les lettres, sinon faux
+	 */
+	private boolean containsAllDigitsAndLetters(String substitutionKey) {
+		for(char keyChar : this.KEY_CHARS) {
+			if(substitutionKey.indexOf(keyChar) == -1) return false;
+		}
+		return true;
+	}
+	
+	/**
+	 * Retourne vrai si la clé de transposition est valide, sinon retourne faux.
+	 * La clé de transposition est valide si elle ne contient que des lettres majuscules sans répétitions.
+	 * 
+	 * @param transpositionKey
+	 * @return vrai si la clé de transposition est valide, sinon faux
+	 */
 	private boolean transpositionKeyIsValid(String transpositionKey) {
-		return transpositionKey.length() > 2 /*&& matches([a-zA-Z]+)*/;
+		return transpositionKey != null && transpositionKey.length() > 2 && transpositionKey.matches("[A-Z]+");
+	}
+	
+	/**
+	 * Génère la table de substitution des caractères à partir de la clé de substitution.
+	 * 
+	 * @param substitutionKey la clé de substitution
+	 */
+	private void generateSubstTable(String substitutionKey) {
+		int i = 0;
+		for(char substRowChar : this.ADFGVX) {
+			for(char substColChar : this.ADFGVX) {
+				String bigram = new String(new char[]{substRowChar, substColChar});
+				char associatedChar = substitutionKey.charAt(i);
+				decryptMap.put(bigram, associatedChar);
+				encryptMap.put(associatedChar, bigram);
+				++i;
+			}
+		}
 	}
 
 	/*
@@ -44,8 +108,115 @@ public class Adfgvx {
 	 * @return the ADFGVX cryptogram
 	 */
 	public String encrypt(String textToEncrypt) {
-		String cleanText = textToEncrypt.replaceAll("[^a-zA-Z0-9]+", "");
-		return null;
+		textToEncrypt = cleanText(textToEncrypt);
+		textToEncrypt = substituteText(textToEncrypt);
+		textToEncrypt = transposeText(textToEncrypt);
+		return textToEncrypt;
+	}
+	
+	/**
+	 * Nettoie le texte à chiffrer en ne concervant que les lettres et les chiffres.
+	 * 
+	 * @param text le texte à nettoyer
+	 * @return le text nettoyé
+	 */
+	private String cleanText(String text) {
+		return text.replaceAll("[^a-zA-Z0-9]+", "");
+	}
+	
+	/**
+	 * Substitue le texte à chiffrer en remplaçant les caractères par le digramme correspondant.
+	 * 
+	 * @param text le texte à substituer
+	 * @return le texte substitué
+	 */
+	private String substituteText(String text) {
+		StringBuilder substText = new StringBuilder();
+		for(int i = 0; i < text.length(); ++i) {
+			String substBigram = encryptMap.get(substText.charAt(i));
+			substText.append(substBigram);
+		}
+		return substText.toString();
+	}
+	
+	/**
+	 * Transpose le texte à chiffrer en utilisant la clé de transposition.
+	 * 
+	 * @param text le texte à chiffrer
+	 * @return le texte transposé
+	 */
+	private String transposeText(String text) {
+		int colCount = this.transpositionKey.length;
+		int rowCount = text.length() / colCount;
+		
+		Map<Character,char[]> tpKeyMap = generateTranspositionKeyMap(rowCount);
+		fillTranspositionColumns(tpKeyMap, text, rowCount, colCount);
+		
+		return readTranspositionArray(tpKeyMap, rowCount, colCount);
+	}
+	
+	/**
+	 * Génère la map des colonnes du tableau de transposition.
+
+	 * @param rowCount le nombre de rangées du tableau de transposition 
+	 * @return la map des colonnes du tableau de transposition
+	 */
+	private Map<Character,char[]> generateTranspositionKeyMap(int rowCount){
+		Map<Character,char[]> tpKeyMap = new HashMap<Character,char[]>();
+		for(char tpKeyChar : this.transpositionKey) {
+			tpKeyMap.put(tpKeyChar, new char[rowCount]);
+		}
+		return tpKeyMap;
+	}
+	
+	/**
+	 * Remplis colonne par colonne le tableau de transposition.
+	 * 
+	 * @param tpMap le tableau de transposition
+	 * @param text le texte à chiffrer
+	 * @param rowCount le nombre de rangées du tableau de transposition
+	 * @param colCount le nombre de colonnes du tableau de transposition
+	 */
+	private void fillTranspositionColumns(Map<Character,char[]> tpMap, String text, int rowCount, int colCount) {
+		//Pour chaque colonne
+		for(int colNum = 0; colNum < colCount; ++colNum) {
+			//Récupération de la colonne en fonction de la lettre
+			char[] col = tpMap.get(this.transpositionKey[colNum]);
+			//Remplissage de la colonne avec les caractères du texte substitué
+			for(int i = 0; i < rowCount; ++i) {
+				int nextCharIndex = colNum + i * rowCount;
+				if(nextCharIndex < text.length()) {
+					col[i] = text.charAt(nextCharIndex);
+				}else{
+					col[i] = getRandomFillerChar();
+				}
+			}
+		}
+	}
+	
+	/**
+	 * Retourne un caractère de remplissage aléatoire parmi A, D, F, G, V et X
+	 * 
+	 * @return un caractère aléatoire parmi A, D, F, G, V, X
+	 */
+	private char getRandomFillerChar() {
+		var rand = new Random();
+		int randIndex = rand.nextInt(ADFGVX.length);
+		return ADFGVX[randIndex];
+	}
+	
+	/**
+	 * Lit le tableau de transposition dans l'ordre alphabétique de la clé
+	 * pour en obtenir le message transposé.
+	 * 
+	 * @param tpKeyMap le tableau de transposition
+	 * @param rowCount le nombre de rangées du tableau
+	 * @param colCount le nombre de colonnes du tableau
+	 * @return le message transposé
+	 */
+	private String readTranspositionArray(Map<Character, char[]> tpKeyMap, int rowCount, int colCount) {
+		
+		return "";
 	}
 
 	/**
