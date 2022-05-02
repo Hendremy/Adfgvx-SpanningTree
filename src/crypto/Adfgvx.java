@@ -152,7 +152,7 @@ public class Adfgvx {
 	 */
 	private String transposeText(String text) {
 		int colCount = this.transpositionKey.length;
-		int rowCount = text.length() / colCount;
+		int rowCount = (int) Math.ceil((double)text.length() / colCount);
 		
 		Map<Character,char[]> tpKeyMap = generateTranspositionKeyMap(rowCount);
 		fillTranspositionColumns(tpKeyMap, text, rowCount, colCount);
@@ -189,7 +189,7 @@ public class Adfgvx {
 			char[] col = tpMap.get(this.transpositionKey[colNum]);
 			//Remplissage de la colonne avec les caractères du texte substitué
 			for(int i = 0; i < rowCount; ++i) {
-				int nextCharIndex = colNum + i * rowCount;
+				int nextCharIndex = colNum + i * colCount;
 				if(nextCharIndex < text.length()) {
 					col[i] = text.charAt(nextCharIndex);
 				}else{
@@ -205,9 +205,10 @@ public class Adfgvx {
 	 * @return un caractère aléatoire parmi A, D, F, G, V, X
 	 */
 	private char getRandomFillerChar() {
-		var rand = new Random();
+		/*var rand = new Random();
 		int randIndex = rand.nextInt(ADFGVX.length);
-		return ADFGVX[randIndex];
+		return ADFGVX[randIndex];*/
+		return 'X';
 	}
 	
 	/**
@@ -220,22 +221,19 @@ public class Adfgvx {
 	 * @return le message transposé
 	 */
 	private String readTranspositionArray(Map<Character, char[]> tpKeyMap, int rowCount, int colCount) {
-		int charCount = 0;
-		int tpArraySize = rowCount * colCount;
 		//Capacité du StringBuilder = nb de caractères dans le tableau + nb de tirets à rajouter entre groupe de 5 caractères
-		int sbCapacity = tpArraySize + (tpArraySize/5) - 1;
+		int tpArraySize = rowCount * colCount;
+		int separatorNb = tpArraySize/5; 
+		int sbCapacity = tpArraySize + separatorNb;
+		
 		StringBuilder cypheredText = new StringBuilder(sbCapacity);
-		for(int rowNum = 0; rowNum < rowCount; ++rowNum) {
-			for(char sortedTpKeyChar : this.sortedTranspKey) {
-				char[] column = tpKeyMap.get(sortedTpKeyChar);
-				char nextChar = column[rowNum];
-				cypheredText.append(nextChar);
-				++charCount;
-				if(charCount == 5) {
-					cypheredText.append('-');
-					charCount = 0;
-				}
-			}
+		for(char keyChar : this.sortedTranspKey) {
+			char[] column = tpKeyMap.get(keyChar);
+			String colToString = new String(column);
+			cypheredText.append(colToString);
+		}
+		for(int i = separatorNb; i > 0; --i) {
+			cypheredText.insert(5*i, '-');
 		}
 		return cypheredText.toString();
 	}
@@ -248,7 +246,7 @@ public class Adfgvx {
 	 */
 	public String decrypt(String textToDecrypt) {
 		// TODO
-		return null;
+		return "";
 	}
 
 	/*
