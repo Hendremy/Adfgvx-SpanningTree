@@ -110,10 +110,9 @@ public class Adfgvx {
 	 * @return the ADFGVX cryptogram
 	 */
 	public String encrypt(String textToEncrypt) {
-		textToEncrypt = cleanTextToCipher(textToEncrypt);
-		textToEncrypt = substituteText(textToEncrypt);
-		textToEncrypt = transposeText(textToEncrypt);
-		return textToEncrypt;
+		char [] arrayToEncrypt = cleanTextToCipher(textToEncrypt);
+		arrayToEncrypt = substituteText(arrayToEncrypt);
+		return transposeText(arrayToEncrypt);
 	}
 	
 	/**
@@ -123,9 +122,9 @@ public class Adfgvx {
 	 * @param text le texte à nettoyer
 	 * @return le text nettoyé
 	 */
-	private String cleanTextToCipher(String text) {
+	private char[] cleanTextToCipher(String text) {
 		text = text.toUpperCase();
-		return text.replaceAll("[^A-Z0-9]+", "");
+		return text.replaceAll("[^A-Z0-9]+", "").toCharArray();
 	}
 	
 	/**
@@ -134,14 +133,14 @@ public class Adfgvx {
 	 * @param text le texte à substituer
 	 * @return le texte substitué
 	 */
-	private String substituteText(String text) {
-		int sbCapacity = text.length() * 2;
+	private char[] substituteText(char[] text) {
+		int sbCapacity = text.length * 2;
 		StringBuilder substText = new StringBuilder(sbCapacity);
-		for(int i = 0; i < text.length(); ++i) {
-			String substBigram = encryptMap.get(text.charAt(i));
+		for(int i = 0; i < text.length; ++i) {
+			String substBigram = encryptMap.get(text[i]);
 			substText.append(substBigram);
 		}
-		return substText.toString();
+		return substText.toString().toCharArray();
 	}
 	
 	/**
@@ -150,9 +149,9 @@ public class Adfgvx {
 	 * @param text le texte à chiffrer
 	 * @return le texte transposé
 	 */
-	private String transposeText(String text) {
+	private String transposeText(char[] text) {
 		int colCount = this.transpositionKey.length;
-		int rowCount = (int) Math.ceil((double)text.length() / colCount);
+		int rowCount = (int) Math.ceil((double)text.length / colCount);
 		
 		Map<Character,char[]> tpKeyMap = generateTranspositionKeyMap(rowCount);
 		fillTranspositionColumns(tpKeyMap, text, rowCount, colCount);
@@ -182,7 +181,7 @@ public class Adfgvx {
 	 * @param rowCount le nombre de rangées du tableau de transposition
 	 * @param colCount le nombre de colonnes du tableau de transposition
 	 */
-	private void fillTranspositionColumns(Map<Character,char[]> tpMap, String text, int rowCount, int colCount) {
+	private void fillTranspositionColumns(Map<Character,char[]> tpMap, char[] text, int rowCount, int colCount) {
 		//Pour chaque colonne
 		for(int colNum = 0; colNum < colCount; ++colNum) {
 			//Récupération de la colonne en fonction de la lettre
@@ -190,8 +189,8 @@ public class Adfgvx {
 			//Remplissage de la colonne avec les caractères du texte substitué
 			for(int i = 0; i < rowCount; ++i) {
 				int nextCharIndex = colNum + i * colCount;
-				if(nextCharIndex < text.length()) {
-					col[i] = text.charAt(nextCharIndex);
+				if(nextCharIndex < text.length) {
+					col[i] = text[nextCharIndex];
 				}else{
 					col[i] = getRandomFillerChar();
 				}
