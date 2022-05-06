@@ -2,7 +2,9 @@ package crypto;
 
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 //import java.util.Random;
 
 public class Adfgvx {
@@ -78,7 +80,35 @@ public class Adfgvx {
 	 * @return vrai si la clé de transposition est valide, sinon faux
 	 */
 	private boolean transpositionKeyIsValid(String transpositionKey) {
-		return transpositionKey != null && transpositionKey.length() > 2 && transpositionKey.matches("[A-Z]+");
+		return transpositionKey != null && transpositionKey.length() > 2 
+				&& containsOnlyUpperCaseLetters(transpositionKey)
+				&& hasNoRepetition(transpositionKey);
+	}
+	
+	/**
+	 * Retourne vrai si la clé de transposition ne contient que des lettres majuscules.
+	 * @param transpositionKey la clé de transposition
+	 * @return vrai si la clé de transposition ne contient que des lettres majuscules, sinon faux
+	 */
+	private boolean containsOnlyUpperCaseLetters(String transpositionKey) {
+		char[] tpKey = transpositionKey.toCharArray();
+		for(int i=0; i < tpKey.length; ++i) {
+			if(!charInRange(tpKey[i], 'A', 'Z')) return false;
+		}
+		return true;
+	}
+	
+	/**
+	 * Retourne vrai si la clé de transposition n'a pas de caractères répétés
+	 * @param transpositionKey la clé de transposition
+	 * @return vrai si la clé de transposition n'a pas de caractères répétés, sinon faux
+	 */
+	private boolean hasNoRepetition(String transpositionKey) {
+		Set<Character> uniqueChars = new HashSet<Character>();
+		for(char caracter : transpositionKey.toCharArray()) {
+			if(!uniqueChars.add(caracter)) return false;
+		}
+		return true;
 	}
 	
 	/**
