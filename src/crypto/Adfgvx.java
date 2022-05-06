@@ -3,7 +3,7 @@ package crypto;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Random;
+//import java.util.Random;
 
 public class Adfgvx {
 	
@@ -14,7 +14,8 @@ public class Adfgvx {
 	private final Map<String, Character> decryptMap;
 	private final Map<Character, String> encryptMap;
 	private final char[] transpositionKey;
-	private final char[] sortedTranspKey; 
+	private final char[] sortedTranspKey;
+	//private final Random rand;
 
 
 	/**
@@ -32,7 +33,6 @@ public class Adfgvx {
 	 * @param transpositionKey la clé de transposition
 	 */
 	public Adfgvx(String substitutionKey, String transpositionKey) {
-		// TODO
 		if(!substitutionKeyIsValid(substitutionKey) || !transpositionKeyIsValid(transpositionKey)) {
 			throw new IllegalArgumentException();
 		}
@@ -42,6 +42,7 @@ public class Adfgvx {
 		this.transpositionKey = transpositionKey.toCharArray();
 		this.sortedTranspKey = Arrays.copyOf(this.transpositionKey, this.transpositionKey.length);
 		Arrays.sort(this.sortedTranspKey);
+		//this.rand = new Random();
 	}
 	
 	/**
@@ -124,7 +125,27 @@ public class Adfgvx {
 	 */
 	private char[] cleanTextToCipher(String text) {
 		text = text.toUpperCase();
-		return text.replaceAll("[^A-Z0-9]+", "").toCharArray();
+		char[] textArray = text.toCharArray();
+		//Utilisation d'un stringbuilder pour avoir une taille max mais 
+		StringBuilder sb = new StringBuilder(textArray.length);
+		for(int i = 0; i < textArray.length; ++i) {
+			char carac = textArray[i];
+			if(charInRange(carac,'A','Z') || charInRange(carac,'0','9')) {
+				sb.append(carac);
+			}
+		}
+		return sb.toString().toCharArray();
+	}
+	
+	/**
+	 * Vérifie si un caractère est compris entre deux autres caractères.
+	 * @param charToCheck le caractère à vérifier
+	 * @param lowerBound borne inférieure de l'intervalle
+	 * @param UpperBound borne supérieure de l'intervalle
+	 * @return vrai si le caractère est compris dans l'intervalle de caractères, sinon faux
+	 */
+	private boolean charInRange(char charToCheck, char lowerBound, char upperBound) {
+		return lowerBound <= charToCheck && charToCheck <= upperBound;
 	}
 	
 	/**
@@ -154,15 +175,16 @@ public class Adfgvx {
 		int rowCount = (int) Math.ceil((double)text.length / colCount);
 		
 		Map<Character,char[]> tpKeyMap = generateTranspositionKeyMap(rowCount);
-		fillTranspositionColumns(tpKeyMap, text, rowCount, colCount);
+		fillEncryptTpArray(tpKeyMap, text, rowCount, colCount);
 		
-		return readTranspositionArray(tpKeyMap, rowCount, colCount);
+		return readEncryptTpArray(tpKeyMap, rowCount, colCount);
 	}
 	
 	/**
 	 * Génère la map des colonnes du tableau de transposition.
 
 	 * @param rowCount le nombre de rangées du tableau de transposition 
+	 * @param transpoKey la clé de transposition à utiliser
 	 * @return la map des colonnes du tableau de transposition
 	 */
 	private Map<Character,char[]> generateTranspositionKeyMap(int rowCount){
@@ -181,7 +203,7 @@ public class Adfgvx {
 	 * @param rowCount le nombre de rangées du tableau de transposition
 	 * @param colCount le nombre de colonnes du tableau de transposition
 	 */
-	private void fillTranspositionColumns(Map<Character,char[]> tpMap, char[] text, int rowCount, int colCount) {
+	private void fillEncryptTpArray(Map<Character,char[]> tpMap, char[] text, int rowCount, int colCount) {
 		//Pour chaque colonne
 		for(int colNum = 0; colNum < colCount; ++colNum) {
 			//Récupération de la colonne en fonction de la lettre
@@ -204,14 +226,13 @@ public class Adfgvx {
 	 * @return un caractère aléatoire parmi A, D, F, G, V, X
 	 */
 	private char getRandomFillerChar() {
-		/*var rand = new Random();
-		int randIndex = rand.nextInt(ADFGVX.length);
+		/**int randIndex = this.rand.nextInt(ADFGVX.length);
 		return ADFGVX[randIndex];*/
 		return 'X';
 	}
 	
 	/**
-	 * Lit le tableau de transposition dans l'ordre alphabétique des lettres de la clé
+	 * Lit le tableau de transposition par colonne dans l'ordre alphabétique des lettres de la clé
 	 * pour en obtenir le message transposé.
 	 * 
 	 * @param tpKeyMap le tableau de transposition
@@ -219,7 +240,7 @@ public class Adfgvx {
 	 * @param colCount le nombre de colonnes du tableau
 	 * @return le message transposé
 	 */
-	private String readTranspositionArray(Map<Character, char[]> tpKeyMap, int rowCount, int colCount) {
+	private String readEncryptTpArray(Map<Character, char[]> tpKeyMap, int rowCount, int colCount) {
 		//Capacité du StringBuilder = nb de caractères dans le tableau + nb de tirets à rajouter entre groupe de 5 caractères
 		int tpArraySize = rowCount * colCount;
 		int separatorNb = tpArraySize/5; 
@@ -244,9 +265,118 @@ public class Adfgvx {
 	 * @return the decrypted text
 	 */
 	public String decrypt(String textToDecrypt) {
-		// TODO
-		return "";
+		char[] text = cleanTextToDecrypt(textToDecrypt);
+		text = invertTranspose(text);
+		return invertSubstitute(text);
 	}
+	
+	/**
+	 * Nettoie le texte à déchiffrer et vérifie qu'il est valide.
+	 * @param textToDecrypt le texte à déchiffrer
+	 * @throws IllegalArgumentException si le message chiffré n'est pas valide
+	 * @return le texte nettoyé
+	 */
+	private char[] cleanTextToDecrypt(String textToDecrypt) {
+		char[] cleanText = removeSeparators(textToDecrypt);
+		if(!textToDecryptIsValid(cleanText)) {
+			throw new IllegalArgumentException();
+		}
+		return cleanText;
+	}
+	
+	/**
+	 * Nettoie le texte à déchiffrer en retirant les tirets séparateurs.
+	 * @param textToDecrypt le texte à déchiffré
+	 * @return le texte nettoyé des tirets séparateurs
+	 */
+	private char[] removeSeparators(String textToDecrypt) {
+		char[] textToClean = textToDecrypt.toCharArray();
+		int cleanTextSize = textToClean.length - (textToClean.length/6);
+		char[] cleanText = new char[cleanTextSize];
+		int cleanTextPos = 0;
+		for(int i = 0; i < textToClean.length; ++i) {
+			char carac = textToClean[i];
+			if(carac != '-') {
+				cleanText[cleanTextPos] = carac;
+				cleanTextPos++;
+			}
+		}
+		return cleanText;
+	}
+	
+	/**
+	 * Vérifie si le texte à déchiffrer est valide.
+	 * @param text le texte à déchiffrer
+	 * @return vrai si le texte à déchiffrer est valide, sinon faux
+	 */
+	private boolean textToDecryptIsValid(char[] text) {
+		return text.length % transpositionKey.length == 0;
+	}
+	
+	/**
+	 * Inverse la transposition du chiffrage en remettant en ordre les digrammes du message.
+	 * @param text le texte à remettre en ordre
+	 * @return le tableau des digrammes du texte en ordre
+	 */
+	private char[] invertTranspose(char[] text) {
+		int colCount = this.sortedTranspKey.length;
+		int rowCount = text.length / colCount;
+		Map<Character, char[]> tpArray = new HashMap<Character, char[]>();
+		fillDecryptTpArray(tpArray, text, rowCount);
+		return readDecryptTpArray(tpArray, rowCount, colCount);
+	}
+	
+	/**
+	 * Remplis les colonnes du tableau de transposition à partir du message chiffré.
+	 * @param tpArray le tableau de transposition à remplir
+	 * @param text le message chiffré
+	 * @param rowCount le nombre de rangées du tableau de transposition
+	 */
+	private void fillDecryptTpArray(Map<Character, char[]> tpArray, char[] text, int rowCount) {
+		int textIndex = 0;
+		for(char tpKeyChar : this.sortedTranspKey) {
+			char[] column = Arrays.copyOfRange(text, textIndex, textIndex + rowCount);
+			tpArray.put(tpKeyChar, column);
+			textIndex += rowCount;
+		}
+	}
+	
+	/**
+	 * Lis le tableau de transposition par rangée dans l'ordre de la clé de transposition non-triée.
+	 * @param tpArray le tableau de transposition
+	 * @param rowCount le nombre de rangées du tableau de transposition
+	 * @param colCount le nombre de colonnes du tableau de transposition
+	 * @return le message chiffré remis en ordre
+	 */
+	private char[] readDecryptTpArray(Map<Character, char[]> tpArray, int rowCount, int colCount) {
+		char[] text = new char[rowCount * colCount];
+		int colNum = 0;
+		for(char tpKeyChar : this.transpositionKey) {
+			char[] column = tpArray.get(tpKeyChar);
+			for(int i = 0; i < column.length; ++i) {
+				int posInString = i * colCount + colNum;
+				text[posInString] = column[i];
+			}
+			colNum++;
+		}
+		return text;
+	}
+	
+	/**
+	 * Substitue les digrammes par leur caractère associés.
+	 * @param text le texte à substituer
+	 * @return le texte substitué
+	 */
+	private String invertSubstitute(char[] text) {
+		StringBuilder sb = new StringBuilder();
+		for(int i = 0; i < text.length; i += 2) {
+			char[] nextTwoChar = new char[] {text[i], text[i+1]};
+			String digram = new String(nextTwoChar);
+			sb.append(this.decryptMap.get(digram));
+		}
+		return sb.toString();
+	}
+	
 
 	/*
 	 * MAIN - TESTS
