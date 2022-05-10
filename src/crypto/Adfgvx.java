@@ -48,6 +48,15 @@ public class Adfgvx {
 	}
 	
 	/**
+	 * Lance une NullPointerException si le texte est null.
+	 * @param text le texte
+	 * @throws NullPointerException
+	 */
+	private void checkIsNull(String text) {
+		if(text == null) throw new NullPointerException();
+	}
+	
+	/**
 	 * Retourne vrai si la clé de substitution est valide, sinon retourne faux.
 	 * La clé de substitution est valide si elle contient tous les chiffres et
 	 * toutes les lettres majuscules sans répétition.
@@ -56,7 +65,8 @@ public class Adfgvx {
 	 * @return vrai si la clé de substitution est valide, sinon faux
 	 */
 	private boolean substitutionKeyIsValid(String substitutionKey) {
-		return substitutionKey != null && substitutionKey.length() == 36 && this.containsAllDigitsAndLetters(substitutionKey);
+		checkIsNull(substitutionKey);
+		return substitutionKey.length() == 36 && this.containsAllDigitsAndLetters(substitutionKey);
 	}
 	
 	/**
@@ -80,7 +90,8 @@ public class Adfgvx {
 	 * @return vrai si la clé de transposition est valide, sinon faux
 	 */
 	private boolean transpositionKeyIsValid(String transpositionKey) {
-		return transpositionKey != null && transpositionKey.length() > 2 
+		checkIsNull(transpositionKey);
+		return transpositionKey.length() > 2 
 				&& containsOnlyUpperCaseLetters(transpositionKey)
 				&& hasNoRepetition(transpositionKey);
 	}
@@ -141,6 +152,7 @@ public class Adfgvx {
 	 * @return the ADFGVX cryptogram
 	 */
 	public String encrypt(String textToEncrypt) {
+		checkIsNull(textToEncrypt);
 		char [] arrayToEncrypt = cleanTextToCipher(textToEncrypt);
 		arrayToEncrypt = substituteText(arrayToEncrypt);
 		return transposeText(arrayToEncrypt);
@@ -156,12 +168,14 @@ public class Adfgvx {
 	private char[] cleanTextToCipher(String text) {
 		text = text.toUpperCase();
 		char[] textArray = text.toCharArray();
-		//Utilisation d'un stringbuilder pour avoir une taille max mais 
+		//Utilisation d'un stringbuilder pour avoir une taille max
 		StringBuilder sb = new StringBuilder(textArray.length);
 		for(int i = 0; i < textArray.length; ++i) {
 			char carac = textArray[i];
 			if(charInRange(carac,'A','Z') || charInRange(carac,'0','9')) {
 				sb.append(carac);
+			}else {
+				handleAccents(carac, sb);
 			}
 		}
 		return sb.toString().toCharArray();
@@ -176,6 +190,30 @@ public class Adfgvx {
 	 */
 	private boolean charInRange(char charToCheck, char lowerBound, char upperBound) {
 		return lowerBound <= charToCheck && charToCheck <= upperBound;
+	}
+	
+	/**
+	 * Ajoute au StringBuilder la lettre correspondant à la lettre accentuée
+	 * donnée en argument.
+	 * @param carac le caractère accentué
+	 * @param sb le StringBuilder
+	 */
+	private void handleAccents(char carac, StringBuilder sb) {
+		if(charInRange(carac, 'À','Å')) {
+			sb.append('A');
+		}else if(carac == 'Ç') {
+			sb.append('C');
+		}else if(charInRange(carac,'È','Ë')) {
+			sb.append('E');
+		}else if(charInRange(carac,'Ì','Ï')) {
+			sb.append('I');
+		}else if(charInRange(carac,'Ò','Ö')) {
+			sb.append('O');
+		}else if(charInRange(carac,'Ù','Ü')) {
+			sb.append('U');
+		}else if(carac == 'Ÿ') {
+			sb.append('Y');
+		}
 	}
 	
 	/**
@@ -295,6 +333,7 @@ public class Adfgvx {
 	 * @return the decrypted text
 	 */
 	public String decrypt(String textToDecrypt) {
+		checkIsNull(textToDecrypt);
 		char[] text = cleanTextToDecrypt(textToDecrypt);
 		text = invertTranspose(text);
 		return invertSubstitute(text);

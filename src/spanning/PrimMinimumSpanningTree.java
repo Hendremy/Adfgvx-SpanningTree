@@ -21,7 +21,7 @@ public class PrimMinimumSpanningTree<V, E> implements SpanningTreeAlgorithm<E>{
 	 * weighted undirected graph.
 	 */
 	@Override
-	public SpanningTree<E> getSpanningTree() {
+	public SpanningTree<E> getSpanningTree() {//Admet graphe non-connexe => qd arbre fini, cherche si y'en a pas d'autres pr faire une foret
 		// TODO
 		return null;
 	}
@@ -32,7 +32,7 @@ public class PrimMinimumSpanningTree<V, E> implements SpanningTreeAlgorithm<E>{
 	 * 
 	 * @param startVertex first vertex of the SPT
 	 */
-	public SpanningTree<E> getSpanningTree(V startVertex) {
+	public SpanningTree<E> getSpanningTree(V startVertex) {//Admet pas graphe connexe, cherche juste arbre couvrant àpd de sommet, récursion ?
 		// TODO
 		return null;
 	}
