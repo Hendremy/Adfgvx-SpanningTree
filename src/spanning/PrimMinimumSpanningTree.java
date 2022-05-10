@@ -1,5 +1,8 @@
 package spanning;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import org.jgrapht.Graph;
 import org.jgrapht.alg.interfaces.SpanningTreeAlgorithm;
 import org.jgrapht.graph.DefaultWeightedEdge;
@@ -7,13 +10,16 @@ import org.jgrapht.graph.SimpleWeightedGraph;
 
 public class PrimMinimumSpanningTree<V, E> implements SpanningTreeAlgorithm<E>{
 
+	private Graph<V,E> graph;
+	private Set<V> remainingVertices;
 	/**
 	 * Constructor
 	 * 
 	 * @param g The graph
 	 */
 	public PrimMinimumSpanningTree(Graph<V, E> g) {
-		//TODO
+		this.graph = g;
+		this.remainingVertices = new HashSet<V>(g.vertexSet());
 	}
 	
 	/**
@@ -23,6 +29,10 @@ public class PrimMinimumSpanningTree<V, E> implements SpanningTreeAlgorithm<E>{
 	@Override
 	public SpanningTree<E> getSpanningTree() {//Admet graphe non-connexe => qd arbre fini, cherche si y'en a pas d'autres pr faire une foret
 		// TODO
+		/*Tant qu'il y a des vertex dans le remainingVertices, faire getSpanningTree(vertex) 
+		 * et en faire une collection de SpanningTree=> Retour un SpanningTree et pas plusieurs ???
+		 * 
+		 * */
 		return null;
 	}
 	
@@ -33,7 +43,12 @@ public class PrimMinimumSpanningTree<V, E> implements SpanningTreeAlgorithm<E>{
 	 * @param startVertex first vertex of the SPT
 	 */
 	public SpanningTree<E> getSpanningTree(V startVertex) {//Admet pas graphe connexe, cherche juste arbre couvrant àpd de sommet, récursion ?
-		// TODO
+		var vertexIterator = remainingVertices.iterator();
+		while(vertexIterator.hasNext()) {
+			V currentVertex = vertexIterator.next();
+			
+			
+		}
 		return null;
 	}
 	
