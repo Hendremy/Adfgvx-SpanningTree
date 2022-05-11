@@ -1,7 +1,9 @@
 package spanning;
 
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.TreeSet;
 
 import org.jgrapht.Graph;
 import org.jgrapht.alg.interfaces.SpanningTreeAlgorithm;
@@ -12,6 +14,7 @@ public class PrimMinimumSpanningTree<V, E> implements SpanningTreeAlgorithm<E>{
 
 	private Graph<V,E> graph;
 	private Set<V> remainingVertices;
+	private Set<V> usedVertices;
 	/**
 	 * Constructor
 	 * 
@@ -20,6 +23,7 @@ public class PrimMinimumSpanningTree<V, E> implements SpanningTreeAlgorithm<E>{
 	public PrimMinimumSpanningTree(Graph<V, E> g) {
 		this.graph = g;
 		this.remainingVertices = new HashSet<V>(g.vertexSet());
+		this.usedVertices = new HashSet<V>();
 	}
 	
 	/**
@@ -42,14 +46,173 @@ public class PrimMinimumSpanningTree<V, E> implements SpanningTreeAlgorithm<E>{
 	 * 
 	 * @param startVertex first vertex of the SPT
 	 */
-	public SpanningTree<E> getSpanningTree(V startVertex) {//Admet pas graphe connexe, cherche juste arbre couvrant àpd de sommet, récursion ?
-		var vertexIterator = remainingVertices.iterator();
-		while(vertexIterator.hasNext()) {
-			V currentVertex = vertexIterator.next();
+	public SpanningTree<E> getSpanningTree(V startVertex) {//Admet pas graphe connexe, cherche juste arbre couvrant àpd de sommet
+		useVertex(startVertex);
+		
+		var edgeComp = new EdgeComparator<E>(this.graph);
+		TreeSet<E> availableEdges = new TreeSet<E>(edgeComp);
+		availableEdges.addAll(this.graph.edgesOf(startVertex));
+		
+		Set<E> spanningTree = new HashSet<E>();
+		double totalWeight = 0;
+		
+		do {
+			E minWeightEdge = availableEdges.first();
 			
-			
+			if(edgeIsValid(minWeightEdge)) {
+				spanningTree.add(minWeightEdge);
+				totalWeight += this.graph.getEdgeWeight(minWeightEdge);
+				
+				V supposedTarget = getTarget(minWeightEdge);
+				V source, target;
+				if(this.remainingVertices.contains(supposedTarget)) {
+					source = getSource(minWeightEdge);
+					target = supposedTarget;
+				}else {
+					source = supposedTarget;
+					target = getSource(minWeightEdge);
+				}
+				
+				availableEdges.addAll(this.graph.edgesOf(target));
+				useVertex(target);
+				
+			}else {
+				availableEdges.remove(minWeightEdge);
+			}
 		}
-		return null;
+		while(!this.remainingVertices.isEmpty() || !availableEdges.isEmpty());//Quid de graphe connexe ou pas ? Déterminer qd on a ts les sommets d'une partie connexe
+		return new SpanningTreeImpl<>(spanningTree,totalWeight);
+	}
+	
+	/**
+	 * Marque le sommet comme étant utilisé et faisant déjà partie de l'arbre couvrant.
+	 * @param vertex le sommet
+	 */
+	private void useVertex(V vertex) {
+		this.remainingVertices.remove(vertex);
+		this.usedVertices.add(vertex);
+	}
+	
+	/**
+	 * Retourne le sommet source de l'arête.
+	 * @param edge l'arête
+	 * @return le sommet source de l'arête
+	 */
+	private V getSource(E edge) {
+		return this.graph.getEdgeSource(edge);
+	}
+	
+	/**
+	 * Retourne le sommet cible de l'arête.
+	 * @param edge l'arête
+	 * @return le sommet cible de l'arête
+	 */
+	private V getTarget(E edge) {
+		return this.graph.getEdgeTarget(edge);
+	}
+	
+	
+	/**
+	 * Retourne vrai si l'arête peut être utilisée pour construire l'arbre couvrant, sinon faux.
+	 * 
+	 * @param edge l'arête à évaluer
+	 * @return vrai si l'arête peut être utilisée pour construire l'arbre couvrant, sinon faux
+	 */
+	private boolean edgeIsValid(E edge) {
+		V source = getSource(edge);
+		V target = getTarget(edge);
+		return (this.remainingVertices.contains(source) && this.usedVertices.contains(target))
+				|| (this.remainingVertices.contains(target) && this.usedVertices.contains(source));
+	}
+	
+//	/**
+//	 * Ajoute des arêtes à l'ensemble des arêtes pondérés en récupérant leur poids dans le graphe.
+//	 * @param weightedEdges l'ensemble des arêtes pondérés
+//	 * @param edges les arêtes dont on doit récupérer le poids
+//	 */
+//	private void addWeightedEdgesToSet(Set<WeightedEdge> weightedEdges, Set<E> edges) {
+//		for(var edge : edges) {
+//			WeightedEdge weightedE = new WeightedEdge(edge, this.graph.getEdgeWeight(edge));
+//			weightedEdges.add(weightedE);
+//		}
+//	}
+//	
+//	/**
+//	 * Classe qui définit une arête pondérée comparable pour pouvoir utiliser le TreeSet.
+//	 * @author hendr
+//	 *
+//	 */
+//	private class WeightedEdge implements Comparable{
+//		
+//		private E edge;
+//		private double weight;
+//		
+//		public WeightedEdge(E edge, double weight) {
+//			this.edge = edge;
+//			this.weight = weight;
+//		}
+//		
+//		/**
+//		 * Retourne l'arête.
+//		 * @return l'arête
+//		 */
+//		public E getEdge() {
+//			return this.edge;
+//		}
+//		
+//		/**
+//		 * Retourne le poids de l'arête.
+//		 * @return le poids de l'arête
+//		 */
+//		public double getWeight() {
+//			return this.weight;
+//		}
+//		
+//		/**
+//		 * Compare les poids de deux arêtes pondérées.
+//		 * @return un entier positif si e1 > e2, 0 si e1 = e2 et un entier négatif si e1 < e2
+//		 */
+//		@Override
+//		public int compareTo(Object o) {
+//			if(o == null) throw new NullPointerException();
+//			WeightedEdge e = (WeightedEdge) o;
+//			return Double.compare(weight, e.getWeight());
+//		}
+//		
+//		
+//	}
+	
+	/**
+	 * Définit un comparateur d'arêtes pondérés.
+	 * @author hendr
+	 *
+	 * @param <E> classe de l'arête
+	 */
+	private class EdgeComparator<E> implements Comparator<E>{
+
+		private Graph<V,E> graph;
+		
+		/**
+		 * Construit un comparateur d'arêtes pondérés à partir d'un graphe pondéré.
+		 * @param graph le graphe pondéré
+		 */
+		public EdgeComparator(Graph<V,E> graph){
+			this.graph = graph;
+		}
+		
+		/**
+		 * Compare deux arêtes pondérées.
+		 * @param edgeA la première arête pondérée
+		 * @param edgeB la deuxième arête pondérée
+		 * @return un entier positif si poids de A > poids de B, 0 si leurs poids sont égaux ou un entier négatif si poids A < poids B
+		 */
+		@Override
+		public int compare(E edgeA, E edgeB) {
+			double weightA = this.graph.getEdgeWeight(edgeA);
+			double weightB = this.graph.getEdgeWeight(edgeB);
+			return Double.compare(weightA, weightB);
+		}
+		
 	}
 	
 	/*
