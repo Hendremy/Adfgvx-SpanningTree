@@ -56,7 +56,7 @@ public class PrimMinimumSpanningTree<V, E> implements SpanningTreeAlgorithm<E>{
 		Set<E> spanningTree = new HashSet<E>();
 		double totalWeight = 0;
 		
-		do {
+		while(!availableEdges.isEmpty() && (!this.remainingVertices.isEmpty() || !availableEdges.isEmpty())){
 			E minWeightEdge = availableEdges.first();
 			
 			if(edgeIsValid(minWeightEdge)) {
@@ -73,6 +73,7 @@ public class PrimMinimumSpanningTree<V, E> implements SpanningTreeAlgorithm<E>{
 					target = getSource(minWeightEdge);
 				}
 				
+				availableEdges.remove(minWeightEdge);
 				availableEdges.addAll(this.graph.edgesOf(target));
 				useVertex(target);
 				
@@ -80,7 +81,7 @@ public class PrimMinimumSpanningTree<V, E> implements SpanningTreeAlgorithm<E>{
 				availableEdges.remove(minWeightEdge);
 			}
 		}
-		while(!this.remainingVertices.isEmpty() || !availableEdges.isEmpty());//Quid de graphe connexe ou pas ? Déterminer qd on a ts les sommets d'une partie connexe
+		//Quid de graphe connexe ou pas ? Déterminer qd on a ts les sommets d'une partie connexe
 		return new SpanningTreeImpl<>(spanningTree,totalWeight);
 	}
 	
@@ -125,63 +126,6 @@ public class PrimMinimumSpanningTree<V, E> implements SpanningTreeAlgorithm<E>{
 				|| (this.remainingVertices.contains(target) && this.usedVertices.contains(source));
 	}
 	
-//	/**
-//	 * Ajoute des arêtes à l'ensemble des arêtes pondérés en récupérant leur poids dans le graphe.
-//	 * @param weightedEdges l'ensemble des arêtes pondérés
-//	 * @param edges les arêtes dont on doit récupérer le poids
-//	 */
-//	private void addWeightedEdgesToSet(Set<WeightedEdge> weightedEdges, Set<E> edges) {
-//		for(var edge : edges) {
-//			WeightedEdge weightedE = new WeightedEdge(edge, this.graph.getEdgeWeight(edge));
-//			weightedEdges.add(weightedE);
-//		}
-//	}
-//	
-//	/**
-//	 * Classe qui définit une arête pondérée comparable pour pouvoir utiliser le TreeSet.
-//	 * @author hendr
-//	 *
-//	 */
-//	private class WeightedEdge implements Comparable{
-//		
-//		private E edge;
-//		private double weight;
-//		
-//		public WeightedEdge(E edge, double weight) {
-//			this.edge = edge;
-//			this.weight = weight;
-//		}
-//		
-//		/**
-//		 * Retourne l'arête.
-//		 * @return l'arête
-//		 */
-//		public E getEdge() {
-//			return this.edge;
-//		}
-//		
-//		/**
-//		 * Retourne le poids de l'arête.
-//		 * @return le poids de l'arête
-//		 */
-//		public double getWeight() {
-//			return this.weight;
-//		}
-//		
-//		/**
-//		 * Compare les poids de deux arêtes pondérées.
-//		 * @return un entier positif si e1 > e2, 0 si e1 = e2 et un entier négatif si e1 < e2
-//		 */
-//		@Override
-//		public int compareTo(Object o) {
-//			if(o == null) throw new NullPointerException();
-//			WeightedEdge e = (WeightedEdge) o;
-//			return Double.compare(weight, e.getWeight());
-//		}
-//		
-//		
-//	}
-	
 	/**
 	 * Définit un comparateur d'arêtes pondérés.
 	 * @author hendr
@@ -210,6 +154,12 @@ public class PrimMinimumSpanningTree<V, E> implements SpanningTreeAlgorithm<E>{
 		public int compare(E edgeA, E edgeB) {
 			double weightA = this.graph.getEdgeWeight(edgeA);
 			double weightB = this.graph.getEdgeWeight(edgeB);
+			if(weightA == weightB) {//Comparaison des sources & cibles pour pas considérer deux arêtes de même poids comme étant la même
+				if(this.graph.getEdgeSource(edgeA) != this.graph.getEdgeSource(edgeB)
+						|| this.graph.getEdgeTarget(edgeA) != this.graph.getEdgeTarget(edgeB)) {
+					return 1;
+				}
+			}
 			return Double.compare(weightA, weightB);
 		}
 		
