@@ -32,12 +32,19 @@ public class PrimMinimumSpanningTree<V, E> implements SpanningTreeAlgorithm<E>{
 	 */
 	@Override
 	public SpanningTree<E> getSpanningTree() {//Admet graphe non-connexe => qd arbre fini, cherche si y'en a pas d'autres pr faire une foret
-		// TODO
 		/*Tant qu'il y a des vertex dans le remainingVertices, faire getSpanningTree(vertex) 
 		 * et en faire une collection de SpanningTree=> Retour un SpanningTree et pas plusieurs ???
 		 * 
 		 * */
-		return null;
+		var spanningForest = new HashSet<E>();
+		double totalWeight = 0;
+		while(!remainingVertices.isEmpty()) {
+			var vertex = remainingVertices.iterator().next();
+			var spanningTree = getSpanningTree(vertex);
+			spanningForest.addAll(spanningTree.getEdges());
+			totalWeight += spanningTree.getWeight();
+		}
+		return new SpanningTreeImpl<>(spanningForest, totalWeight);
 	}
 	
 	/**
@@ -48,10 +55,7 @@ public class PrimMinimumSpanningTree<V, E> implements SpanningTreeAlgorithm<E>{
 	 */
 	public SpanningTree<E> getSpanningTree(V startVertex) {//Admet pas graphe connexe, cherche juste arbre couvrant àpd de sommet
 		useVertex(startVertex);
-		
-		var edgeComp = new EdgeComparator<E>(this.graph);
-		TreeSet<E> availableEdges = new TreeSet<E>(edgeComp);
-		availableEdges.addAll(this.graph.edgesOf(startVertex));
+		var availableEdges = initAvailableEdges(startVertex);
 		
 		Set<E> spanningTree = new HashSet<E>();
 		double totalWeight = 0;
@@ -83,6 +87,18 @@ public class PrimMinimumSpanningTree<V, E> implements SpanningTreeAlgorithm<E>{
 		}
 		//Quid de graphe connexe ou pas ? Déterminer qd on a ts les sommets d'une partie connexe
 		return new SpanningTreeImpl<>(spanningTree,totalWeight);
+	}
+	
+	/**
+	 * Initialise l'arbre-ensemble des arêtes disponibles à partir du sommet de départ
+	 * @param startVertex
+	 * @return
+	 */
+	private TreeSet<E> initAvailableEdges(V startVertex){
+		var edgeComp = new EdgeComparator<E>(this.graph);
+		TreeSet<E> availableEdges = new TreeSet<E>(edgeComp);
+		availableEdges.addAll(this.graph.edgesOf(startVertex));
+		return availableEdges;
 	}
 	
 	/**
