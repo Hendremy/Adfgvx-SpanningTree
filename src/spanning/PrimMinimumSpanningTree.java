@@ -21,10 +21,21 @@ public class PrimMinimumSpanningTree<V, E> implements SpanningTreeAlgorithm<E>{
 	 * 
 	 * @param g The graph
 	 */
-	public PrimMinimumSpanningTree(Graph<V, E> g) {
-		this.graph = g;
-		this.remainingVertices = new HashSet<V>(g.vertexSet());
+	public PrimMinimumSpanningTree(Graph<V, E> graph) {
+		validateGraph(graph);
+		this.graph = graph;
+		this.remainingVertices = new HashSet<V>(graph.vertexSet());
 		this.usedVertices = new HashSet<V>();
+	}
+	
+	/**
+	 * Valide le graphe fourni en argument du constructeur et lance des exceptions dans le cas où
+	 * le graphe ne serait pas valide. 
+	 * @param graph le graphe à valider
+	 * @throws NullPointerException si graph est null
+	 */
+	private void validateGraph(Graph<V,E> graph) {
+		if(graph == null) throw new NullPointerException();
 	}
 	
 	/**
@@ -164,17 +175,17 @@ public class PrimMinimumSpanningTree<V, E> implements SpanningTreeAlgorithm<E>{
 	 * Définit un comparateur d'arêtes pondérés.
 	 * @author hendr
 	 *
-	 * @param <E> classe de l'arête
+	 * @param <Edge> classe de l'arête
 	 */
-	private class EdgeComparator<E> implements Comparator<E>{
+	private class EdgeComparator<Edge> implements Comparator<Edge>{
 
-		private Graph<V,E> graph;
+		private Graph<V,Edge> graph;
 		
 		/**
 		 * Construit un comparateur d'arêtes pondérés à partir d'un graphe pondéré.
 		 * @param graph le graphe pondéré
 		 */
-		public EdgeComparator(Graph<V,E> graph){
+		public EdgeComparator(Graph<V,Edge> graph){
 			this.graph = graph;
 		}
 		
@@ -185,7 +196,7 @@ public class PrimMinimumSpanningTree<V, E> implements SpanningTreeAlgorithm<E>{
 		 * @return un entier positif si poids de A > poids de B, 0 si leurs poids sont égaux ou un entier négatif si poids A < poids B
 		 */
 		@Override
-		public int compare(E edgeA, E edgeB) {
+		public int compare(Edge edgeA, Edge edgeB) {
 			double weightA = this.graph.getEdgeWeight(edgeA);
 			double weightB = this.graph.getEdgeWeight(edgeB);
 			if(weightA == weightB) {//Comparaison des sources & cibles pour pas considérer deux arêtes de même poids comme étant la même
@@ -202,7 +213,7 @@ public class PrimMinimumSpanningTree<V, E> implements SpanningTreeAlgorithm<E>{
 		 * @param edgeB la deuxième arête
 		 * @return vrai si les deux arêtes relient les mêmes sommets, sinon faux.
 		 */
-		private boolean edgesAreDuplicate(E edgeA, E edgeB) {
+		private boolean edgesAreDuplicate(Edge edgeA, Edge edgeB) {
 			V sourceA = graph.getEdgeSource(edgeA), targetA = graph.getEdgeTarget(edgeA);
 			V sourceB = graph.getEdgeSource(edgeB), targetB = graph.getEdgeTarget(edgeB);
 			

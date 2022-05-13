@@ -52,7 +52,7 @@ public class AdfgvxTest {
 	@Test
 	void tooShortTranspositionKey() {
 		Exception illegalArgExc = assertThrows(IllegalArgumentException.class, ()->{
-			new Adfgvx("BJLZ4PW7AUVI0H3Y5MK8FEXQGDO16T9NSR2C","B");
+			new Adfgvx("BJLZ4PW7AUVI0H3Y5MK8FEXQGDO16T9NSR2C","");
 		});
 		
 		assertNotNull(illegalArgExc);

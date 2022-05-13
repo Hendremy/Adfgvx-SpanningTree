@@ -19,6 +19,7 @@ public class Adfgvx {
 	private final char[] sortedTranspKey;
 	//private final Random rand;
 
+	//Test du prof: Performance OK mais soucis dans les tests
 
 	/**
 	 * Construit un objet Adfgvx qui permet de chiffrer ou déchiffrer un message selon
@@ -91,7 +92,7 @@ public class Adfgvx {
 	 */
 	private boolean transpositionKeyIsValid(String transpositionKey) {
 		checkIsNull(transpositionKey);
-		return transpositionKey.length() > 2 
+		return transpositionKey.length() > 0 
 				&& containsOnlyUpperCaseLetters(transpositionKey)
 				&& hasNoRepetition(transpositionKey);
 	}

@@ -1,6 +1,7 @@
 package spanning;
 
 import org.junit.jupiter.api.Test;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 import org.jgrapht.alg.interfaces.SpanningTreeAlgorithm.SpanningTree;
@@ -16,6 +17,14 @@ public class PrimMinimumSpanningTreeTest {
 	void testPrimMinimumSpanningTree() {
 		SimpleWeightedGraph<Integer, DefaultWeightedEdge> g = createSimpleWeightedGraph();
 		assertNotNull(new PrimMinimumSpanningTree<>(g));
+	}
+	
+	@Test
+	void constructWithNullGraph() {
+		SimpleWeightedGraph<Integer, DefaultWeightedEdge> g = null;
+		assertThrows(NullPointerException.class, () -> {
+			new PrimMinimumSpanningTree<>(g);
+			});
 	}
 
 	/*
