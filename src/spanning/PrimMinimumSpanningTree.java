@@ -1,5 +1,6 @@
 package spanning;
 
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Set;
@@ -36,15 +37,14 @@ public class PrimMinimumSpanningTree<V, E> implements SpanningTreeAlgorithm<E>{
 		 * et en faire une collection de SpanningTree=> Retour un SpanningTree et pas plusieurs ???
 		 * 
 		 * */
-		var spanningForest = new HashSet<E>();
-		double totalWeight = 0;
-		while(!remainingVertices.isEmpty()) {
-			var vertex = remainingVertices.iterator().next();
+		var spanningForest = new TempTree();
+		
+		while(!this.remainingVertices.isEmpty()) {
+			var vertex = this.remainingVertices.iterator().next();
 			var spanningTree = getSpanningTree(vertex);
-			spanningForest.addAll(spanningTree.getEdges());
-			totalWeight += spanningTree.getWeight();
+			spanningForest.addAllEdges(spanningTree.getEdges(),spanningTree.getWeight());
 		}
-		return new SpanningTreeImpl<>(spanningForest, totalWeight);
+		return new SpanningTreeImpl<>(spanningForest.getEdges(), spanningForest.getWeight());
 	}
 	
 	/**
@@ -54,39 +54,57 @@ public class PrimMinimumSpanningTree<V, E> implements SpanningTreeAlgorithm<E>{
 	 * @param startVertex first vertex of the SPT
 	 */
 	public SpanningTree<E> getSpanningTree(V startVertex) {//Admet pas graphe connexe, cherche juste arbre couvrant àpd de sommet
+		var spanningTree = new TempTree();
 		useVertex(startVertex);
-		var availableEdges = initAvailableEdges(startVertex);
-		
-		Set<E> spanningTree = new HashSet<E>();
-		double totalWeight = 0;
-		
-		while(!availableEdges.isEmpty() && (!this.remainingVertices.isEmpty() || !availableEdges.isEmpty())){
+		if(this.graph.degreeOf(startVertex) > 0) {
+			var availableEdges = initAvailableEdges(startVertex);
+			buildSpanningTree(startVertex, availableEdges, spanningTree);
+		}
+		//Quid de graphe connexe ou pas ? Déterminer qd on a ts les sommets d'une partie connexe
+		return new SpanningTreeImpl<>(spanningTree.getEdges(),spanningTree.getWeight());
+	}
+	
+	/**
+	 * Construit l'arbre couvrant à partir du sommet spécifié.
+	 * @param startVertex le sommet de départ
+	 * @param availableEdges l'ensemble des arêtes disponible depuis le sommet
+	 * @param spanningTree l'arbre à construire
+	 * @param totalWeight le poids total de l'arbre à construire
+	 */
+	private void buildSpanningTree(V startVertex, TreeSet<E> availableEdges, TempTree spanningTree) {
+		while(!(availableEdges.isEmpty() || this.remainingVertices.isEmpty())){
 			E minWeightEdge = availableEdges.first();
-			
 			if(edgeIsValid(minWeightEdge)) {
-				spanningTree.add(minWeightEdge);
-				totalWeight += this.graph.getEdgeWeight(minWeightEdge);
-				
-				V supposedTarget = getTarget(minWeightEdge);
-				V source, target;
-				if(this.remainingVertices.contains(supposedTarget)) {
-					source = getSource(minWeightEdge);
-					target = supposedTarget;
-				}else {
-					source = supposedTarget;
-					target = getSource(minWeightEdge);
-				}
-				
-				availableEdges.remove(minWeightEdge);
-				availableEdges.addAll(this.graph.edgesOf(target));
-				useVertex(target);
-				
+				updateSpanningTree(minWeightEdge, availableEdges, spanningTree);
 			}else {
 				availableEdges.remove(minWeightEdge);
 			}
 		}
-		//Quid de graphe connexe ou pas ? Déterminer qd on a ts les sommets d'une partie connexe
-		return new SpanningTreeImpl<>(spanningTree,totalWeight);
+	}
+	
+	/**
+	 * Ajoute l'arête de poids minimum à l'arbre couvrant et met à jour l'ensemble des arêtes disponibles.
+	 * @param minWeightEdge l'arête de poids minimum
+	 * @param availableEdges l'ensemble des arêtes disponibles
+	 * @param spanningTree l'arbre couvrant
+	 * @param totalWeight le poids de l'arbre couvrant
+	 */
+	private void updateSpanningTree(E minWeightEdge, TreeSet<E> availableEdges, TempTree spanningTree) {
+		spanningTree.addEdge(minWeightEdge, this.graph.getEdgeWeight(minWeightEdge));
+		availableEdges.remove(minWeightEdge);
+		V target = getActualTarget(minWeightEdge);
+		availableEdges.addAll(this.graph.edgesOf(target));
+		useVertex(target);
+	}
+	
+	/**
+	 * Retourne le sommet cible de l'arête (dans le sens de création de l'arbre couvrant).
+	 * @param edge l'arête
+	 * @return le sommet cible de l'arête
+	 */
+	private V getActualTarget(E edge) {
+		V supposedTarget = getTarget(edge);
+		return this.remainingVertices.contains(supposedTarget) ? supposedTarget : this.getSource(edge);
 	}
 	
 	/**
@@ -102,7 +120,7 @@ public class PrimMinimumSpanningTree<V, E> implements SpanningTreeAlgorithm<E>{
 	}
 	
 	/**
-	 * Marque le sommet comme étant utilisé et faisant déjà partie de l'arbre couvrant.
+	 * Marque le sommet comme étant utilisé et faisant déjà partie de l'arbre/forêt couvrant(e).
 	 * @param vertex le sommet
 	 */
 	private void useVertex(V vertex) {
@@ -171,16 +189,82 @@ public class PrimMinimumSpanningTree<V, E> implements SpanningTreeAlgorithm<E>{
 			double weightA = this.graph.getEdgeWeight(edgeA);
 			double weightB = this.graph.getEdgeWeight(edgeB);
 			if(weightA == weightB) {//Comparaison des sources & cibles pour pas considérer deux arêtes de même poids comme étant la même
-				if(this.graph.getEdgeSource(edgeA) != this.graph.getEdgeSource(edgeB)
-						|| this.graph.getEdgeTarget(edgeA) != this.graph.getEdgeTarget(edgeB)) {
-					return 1;
+				if(!edgesAreDuplicate(edgeA, edgeB)) {
+					return -1;
 				}
 			}
 			return Double.compare(weightA, weightB);
 		}
 		
+		/**
+		 * Vérifie si deux arêtes relients les mêmes sommets.
+		 * @param edgeA la première arête
+		 * @param edgeB la deuxième arête
+		 * @return vrai si les deux arêtes relient les mêmes sommets, sinon faux.
+		 */
+		private boolean edgesAreDuplicate(E edgeA, E edgeB) {
+			V sourceA = graph.getEdgeSource(edgeA), targetA = graph.getEdgeTarget(edgeA);
+			V sourceB = graph.getEdgeSource(edgeB), targetB = graph.getEdgeTarget(edgeB);
+			
+			return (sourceA.equals(sourceB) && targetA.equals(targetB))
+					|| (sourceA.equals(targetB) && targetA.equals(sourceB));
+		}
 	}
 	
+	/**
+	 * Définit un arbre en train d'être construit.
+	 * @author hendr
+	 */
+	private class TempTree{
+		
+		private Set<E> edges;
+		private double weight;
+		
+		/**
+		 * Initialise l'arbre en construction.
+		 */
+		public TempTree() {
+			edges = new HashSet<E>();
+			weight = 0.0;
+		}
+		
+		/**
+		 * Retourne les arêtes de l'arbre.
+		 * @return les arêtes de l'arbre
+		 */
+		public Set<E> getEdges() {
+			return this.edges;
+		}
+		
+		/**
+		 * Retourne le poids total de l'arbre
+		 * @return le poids total de l'arbre
+		 */
+		public double getWeight() {
+			return this.weight;
+		}
+		
+		/**
+		 * Ajoute une arête et son poids à l'arbre.
+		 * @param edge l'arête à ajouter
+		 * @param weight le poids de l'arête à ajouter
+		 */
+		public void addEdge(E edge, double weight) {
+			this.edges.add(edge);
+			this.weight += weight;
+		}
+		
+		/**
+		 * Ajoute toutes les arêtes d'une collection et leur poids total à l'arbre.
+		 * @param edges les arêtes d'une collection
+		 * @param totalWeight le poids total des arêtes de la collection
+		 */
+		public void addAllEdges(Collection<E> edges, double totalWeight) {
+			this.edges.addAll(edges);
+			this.weight += totalWeight;
+		}
+	}
+
 	/*
 	 * MAIN - Exemple d'utilisation 
 	 */
@@ -217,10 +301,12 @@ public class PrimMinimumSpanningTree<V, E> implements SpanningTreeAlgorithm<E>{
 		 * Exemple 2 - Graphe aléatoire
 		 */
 		System.out.println("\n>>> Graphe pondéré connexe aléatoire");
-		SimpleWeightedGraph<Integer, DefaultWeightedEdge> g2 = createUndirectedWeightedGraph(5000, 10000);
+//		SimpleWeightedGraph<Integer, DefaultWeightedEdge> g2 = createUndirectedWeightedGraph(5000, 10000);
 //		SimpleWeightedGraph<Integer, DefaultWeightedEdge> g2 = createUndirectedWeightedGraph(10000, 20000);
 //		SimpleWeightedGraph<Integer, DefaultWeightedEdge> g2 = createUndirectedWeightedGraph(20000, 40000);
-//		SimpleWeightedGraph<Integer, DefaultWeightedEdge> g2 = createUndirectedWeightedGraph(100000, 200000);
+		SimpleWeightedGraph<Integer, DefaultWeightedEdge> g2 = createUndirectedWeightedGraph(100000, 200000);
+		
+		
 		System.out.println("\nGraphe généré");
 		System.out.printf("  sommets : %d / arêtes : %d\n", g2.vertexSet().size(), g2.edgeSet().size());
 		
@@ -278,9 +364,9 @@ public class PrimMinimumSpanningTree<V, E> implements SpanningTreeAlgorithm<E>{
 		g.setEdgeWeight(g.addEdge(5, 6), 3);
 		
 		// Ajout d'une deuxième composante connexe
-//		g.addVertex(7);
-//		g.addVertex(8);
-//		g.setEdgeWeight(g.addEdge(7, 8), 2);
+		g.addVertex(7);
+		g.addVertex(8);
+		g.setEdgeWeight(g.addEdge(7, 8), 2);
 		
 		return g;
 	}
