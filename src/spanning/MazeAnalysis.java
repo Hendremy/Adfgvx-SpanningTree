@@ -55,34 +55,89 @@ public class MazeAnalysis {
 	 */
 	private void buildMazeGraph(){
 		mazeGraph = new SimpleGraph<>(DefaultEdge.class);
-		Cell mazeStart = new Cell(cellHeight, cellHeight);
-		Cell mazeEnd = new Cell(image.getTileWidth() - 2 * cellHeight + 1, image.getTileHeight() - 2 * cellHeight + 1);
+		findRooms();
+		findHorizontalPassages();
+		findVerticalPassages();
+	}
+	
+	/**
+	 * Trouve les pièces du labyrinthe.
+	 */
+	private void findRooms() {
+		for(int col = 1; col < colCount; col += 2) {
+			for(int row = 1; row < rowCount; row +=2) {
+				if(getRGBAtCoordinates(col, row) == Color.WHITE.getRGB()) {
+					rooms.put(new Cell(col, row), roomNumber);
+					this.mazeGraph.addVertex(roomNumber);
+					roomNumber++;
+				}
+			}
 		}
+	}
 	
 	/**
 	 * Trouve les passages horizontaux entre deux pièces du labyrinthe.
 	 */
 	private void findHorizontalPassages() {
-		for(int i = 1; i < rowCount; i += 2) {
-			for(int j = 2; j < colCount; j+= 2) {
-				
-			}
-		}
+		findPassages(2,1, true);
 	}
 	
 	/**
 	 * Trouve les passages verticaux entre deux pièces du labyrinthe.
 	 */
 	private void findVerticalPassages() {
-		for(int i = 2; i < rowCount; i+= 2) {//Attention si 2 out of bounds => exception ?
-			for(int j = 1; j < colCount; j+=2) {
-				
+		findPassages(1,2, false);
+	}
+	
+	/**
+	 * Trouve les passages horizontaux ou verticaux entre deux pièces d'un labyrinthe
+	 * à partir d'une colonne et d'une rangée définie.
+	 * @param colStart la colonne de départ
+	 * @param rowStart la rangée du départ
+	 * @param horizontal indique si le passage est horizontal ou vertical
+	 */
+	private void findPassages(int colStart, int rowStart, boolean horizontal) {
+		for(int row = rowStart; row < rowCount; row+= 2) {//Attention si 2 out of bounds => exception ?
+			for(int col = colStart; col < colCount; col+=2) {
+				if(getRGBAtCoordinates(col,row) == Color.WHITE.getRGB()) {
+					registerPassage(col, row, horizontal);
+				}
 			}
 		}
 	}
 	
-	private int getRGBAtCoordinates() {
-		
+	/**
+	 * Enregistre le passage entre deux pièces dans le graphe.
+	 * @param col la colonne du passage
+	 * @param row la rangée du passage
+	 * @param horizontal indique si le passage est horizontal ou vertical
+	 */
+	private void registerPassage(int col, int row, boolean horizontal) {
+		Cell cellSource = horizontal ? new Cell(col, row-1) : new Cell(col-1, row);
+		Cell cellTarget = horizontal ? new Cell(col, row+1) : new Cell(col+1, row);
+		this.mazeGraph.addEdge(rooms.get(cellSource), rooms.get(cellTarget));
+	}
+	
+	/**
+	 * Retourne la couleur de la case du labyrinthe à la colonne et à la rangée désignée.
+	 * @param cell la case du labyrinthe
+	 * @return la couleur de la case
+	 */
+	private int getRGBAtCoordinates(int col, int row) {
+		int[] pos = calcPixelCoordinates(col, row);
+		return image.getRGB(pos[0], pos[1]);
+	}
+	
+	/**
+	 * Calcule les coordonnées du pixel correspondant à la rangée et à la colonne.
+	 * @param col la colonne
+	 * @param row la rangée
+	 * @return les coordonnées du pixel correspondant à la rangée et à la colonne
+	 */
+	private int[] calcPixelCoordinates(int col, int row) {
+		int pixelX = col * this.cellHeight;
+		int pixelY = row * this.cellHeight;
+		return new int[] {pixelX, pixelY};
 	}
 	
 	/**
