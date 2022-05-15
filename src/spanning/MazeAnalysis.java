@@ -2,6 +2,8 @@ package spanning;
 
 import java.awt.Color;
 import java.awt.image.BufferedImage;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.jgrapht.Graph;
 import org.jgrapht.graph.DefaultEdge;
@@ -12,15 +14,25 @@ import graphics.Image;
 public class MazeAnalysis {
 	
 	private Graph<Integer, DefaultEdge> mazeGraph;
-	
+	private Map<Cell, Integer> rooms;
+	private BufferedImage image;
+	private int cellHeight;
+	private int rowCount;
+	private int colCount;
+	private int roomNumber = 0;
 	/**
 	 * Constructor
 	 * 
 	 * @param image The bitmap image to analyze
 	 */
 	public MazeAnalysis(BufferedImage image) {
-		int roomHeight = getRoomHeight(image);
-		this.mazeGraph = buildMazeGraph(image, roomHeight);
+		this.image = image;
+		this.cellHeight = getCellHeight(image);
+		this.mazeGraph = new SimpleGraph<>(DefaultEdge.class);
+		this.rooms = new HashMap<>();
+		this.rowCount = image.getWidth() / cellHeight;
+		this.colCount = image.getHeight() / cellHeight;
+		buildMazeGraph();
 	}
 	
 	/**
@@ -28,15 +40,48 @@ public class MazeAnalysis {
 	 * @param image l'image du labyrinthe
 	 * @return la hauteur d'une pièce de labyrinthe
 	 */
-	private int getRoomHeight(BufferedImage image) {
+	private int getCellHeight(BufferedImage image) {
 		for(int i = 0; i < image.getTileHeight(); ++i ) {
 			if(image.getRGB(0, i) == Color.WHITE.getRGB()) return i;
 		}
 		return -1;
 	}
 	
-	private Graph<Integer,DefaultEdge> buildMazeGraph(BufferedImage image, int roomHeight){
-		Graph<Integer,DefaultEdge> mazeGraph = new SimpleGraph<Integer,DefaultEdge>();
+	/**
+	 * Construit le graphe du labyrinthe à partir d'une image de labyrinthe.
+	 * @param image l'image de labyrinthe
+	 * @param cellHeight la taille d'une case du labyrinthe
+	 * @return le graphe du labyrinthe
+	 */
+	private void buildMazeGraph(){
+		mazeGraph = new SimpleGraph<>(DefaultEdge.class);
+		Cell mazeStart = new Cell(cellHeight, cellHeight);
+		Cell mazeEnd = new Cell(image.getTileWidth() - 2 * cellHeight + 1, image.getTileHeight() - 2 * cellHeight + 1);
+		}
+	
+	/**
+	 * Trouve les passages horizontaux entre deux pièces du labyrinthe.
+	 */
+	private void findHorizontalPassages() {
+		for(int i = 1; i < rowCount; i += 2) {
+			for(int j = 2; j < colCount; j+= 2) {
+				
+			}
+		}
+	}
+	
+	/**
+	 * Trouve les passages verticaux entre deux pièces du labyrinthe.
+	 */
+	private void findVerticalPassages() {
+		for(int i = 2; i < rowCount; i+= 2) {//Attention si 2 out of bounds => exception ?
+			for(int j = 1; j < colCount; j+=2) {
+				
+			}
+		}
+	}
+	
+	private int getRGBAtCoordinates() {
 		
 	}
 	
@@ -79,6 +124,62 @@ public class MazeAnalysis {
 	public boolean isExitReachable() {
 		// TODO
 		return false;
+	}
+	
+	/**
+	 * Définit une case du labyrinthe contenant ses coordonnées dans le tableau.
+	 * @author hendr
+	 *
+	 */
+	private class Cell{
+		private int x;
+		private int y;
+		
+		/**
+		 * Construit une case du labyrinthe avec ses coordonnées dans le tableau.
+		 * @param x coordonnée horizontale de la case
+		 * @param y coordonnée verticale de la case
+		 */
+		public Cell(int x, int y) {
+			this.x = x;
+			this.y = y;
+		}
+		
+		/**
+		 * Retourne les coordonnées horizontale et verticale de la case.
+		 * @return les coordonnées horizontale et verticale de la case
+		 */
+		public int[] getPos() {
+			return new int[] {x,y};
+		}
+	}
+	
+	/**
+	 * Définit un passage entre deux cases du labyrinthe.
+	 * @author hendr
+	 *
+	 */
+	private class Passage{
+		private Cell a;
+		private Cell b;
+		
+		/**
+		 * Construit un passage à partir de deux cases du labyrinthe.
+		 * @param a la première case
+		 * @param b la deuxième case
+		 */
+		public Passage(Cell a, Cell b) {
+			this.a = a;
+			this.b = b;
+		}
+		
+		/**
+		 * Retourne les deux cases reliés par le passage.
+		 * @return les deux cases reliés par le passage
+		 */
+		public Cell[] getCells() {
+			return new Cell[] {a,b};
+		}
 	}
 	
 	/**
