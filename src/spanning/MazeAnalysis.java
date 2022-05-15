@@ -1,9 +1,17 @@
 package spanning;
 
+import java.awt.Color;
 import java.awt.image.BufferedImage;
+
+import org.jgrapht.Graph;
+import org.jgrapht.graph.DefaultEdge;
+import org.jgrapht.graph.SimpleGraph;
+
 import graphics.Image;
 
 public class MazeAnalysis {
+	
+	private Graph<Integer, DefaultEdge> mazeGraph;
 	
 	/**
 	 * Constructor
@@ -11,7 +19,25 @@ public class MazeAnalysis {
 	 * @param image The bitmap image to analyze
 	 */
 	public MazeAnalysis(BufferedImage image) {
-		// TODO
+		int roomHeight = getRoomHeight(image);
+		this.mazeGraph = buildMazeGraph(image, roomHeight);
+	}
+	
+	/**
+	 * Retourne la hauteur d'une pièce de labyrinthe à partir de son image.
+	 * @param image l'image du labyrinthe
+	 * @return la hauteur d'une pièce de labyrinthe
+	 */
+	private int getRoomHeight(BufferedImage image) {
+		for(int i = 0; i < image.getTileHeight(); ++i ) {
+			if(image.getRGB(0, i) == Color.WHITE.getRGB()) return i;
+		}
+		return -1;
+	}
+	
+	private Graph<Integer,DefaultEdge> buildMazeGraph(BufferedImage image, int roomHeight){
+		Graph<Integer,DefaultEdge> mazeGraph = new SimpleGraph<Integer,DefaultEdge>();
+		
 	}
 	
 	/**

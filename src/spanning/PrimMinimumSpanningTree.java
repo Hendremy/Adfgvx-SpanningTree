@@ -65,6 +65,7 @@ public class PrimMinimumSpanningTree<V, E> implements SpanningTreeAlgorithm<E>{
 	 * @param startVertex first vertex of the SPT
 	 */
 	public SpanningTree<E> getSpanningTree(V startVertex) {//Admet pas graphe connexe, cherche juste arbre couvrant àpd de sommet
+		checkStartVertex(startVertex);
 		var spanningTree = new TempTree();
 		useVertex(startVertex);
 		if(this.graph.degreeOf(startVertex) > 0) {
@@ -73,6 +74,17 @@ public class PrimMinimumSpanningTree<V, E> implements SpanningTreeAlgorithm<E>{
 		}
 		//Quid de graphe connexe ou pas ? Déterminer qd on a ts les sommets d'une partie connexe
 		return new SpanningTreeImpl<>(spanningTree.getEdges(),spanningTree.getWeight());
+	}
+	
+	/**
+	 * Vérifie que le sommet de départ de l'arbre soit valide, lance des exceptions si invalide.
+	 * @param startVertex le sommet de départ
+	 * @throws NullPointerException si startVertex est null
+	 * @throws IllegalArgumentException si startVertex est invalide
+	 */
+	private void checkStartVertex(V startVertex) {
+		if(startVertex == null) throw new NullPointerException();
+		if(!this.graph.containsVertex(startVertex)) throw new IllegalArgumentException();
 	}
 	
 	/**
@@ -375,10 +387,10 @@ public class PrimMinimumSpanningTree<V, E> implements SpanningTreeAlgorithm<E>{
 		g.setEdgeWeight(g.addEdge(5, 6), 3);
 		
 		// Ajout d'une deuxième composante connexe
-		g.addVertex(7);
-		g.addVertex(8);
-		g.setEdgeWeight(g.addEdge(7, 8), 2);
-		
+//		g.addVertex(7);
+//		g.addVertex(8);
+//		g.setEdgeWeight(g.addEdge(7, 8), 2);
+//		
 		return g;
 	}
 
