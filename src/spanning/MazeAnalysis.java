@@ -3,9 +3,12 @@ package spanning;
 import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import org.jgrapht.Graph;
+import org.jgrapht.alg.interfaces.SpanningTreeAlgorithm.SpanningTree;
 import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.SimpleGraph;
 
@@ -16,10 +19,12 @@ public class MazeAnalysis {
 	private Graph<Integer, DefaultEdge> mazeGraph;
 	private Map<Cell, Integer> rooms;
 	private BufferedImage image;
+	private SpanningTree<DefaultEdge> spanTree;
+	private Set<Integer> spanTreeVertices;
 	private int cellHeight;
 	private int rowCount;
 	private int colCount;
-	private int roomNumber = 0;
+	private int roomNumber = 1;
 	/**
 	 * Constructor
 	 * 
@@ -27,12 +32,21 @@ public class MazeAnalysis {
 	 */
 	public MazeAnalysis(BufferedImage image) {
 		this.image = image;
-		this.cellHeight = getCellHeight(image);
+		initMazeGrid();
 		this.mazeGraph = new SimpleGraph<>(DefaultEdge.class);
 		this.rooms = new HashMap<>();
-		this.rowCount = image.getWidth() / cellHeight;
-		this.colCount = image.getHeight() / cellHeight;
+		this.spanTreeVertices = new HashSet<Integer>();
 		buildMazeGraph();
+		findSpanningTree();
+	}
+	
+	/**
+	 * Initialise la taille d'une case de la grille du labyrinthe et le nombre de colonnes et rangées.
+	 */
+	private void initMazeGrid() {
+		this.cellHeight = getCellHeight(image);
+		this.rowCount = image.getHeight() / cellHeight;
+		this.colCount = image.getWidth() / cellHeight;
 	}
 	
 	/**
@@ -64,8 +78,8 @@ public class MazeAnalysis {
 	 * Trouve les pièces du labyrinthe.
 	 */
 	private void findRooms() {
-		for(int col = 1; col < colCount; col += 2) {
-			for(int row = 1; row < rowCount; row +=2) {
+		for(int col = 1; col < colCount - 1; col += 2) {
+			for(int row = 1; row < rowCount - 1; row +=2) {
 				if(getRGBAtCoordinates(col, row) == Color.WHITE.getRGB()) {
 					rooms.put(new Cell(col, row), roomNumber);
 					this.mazeGraph.addVertex(roomNumber);
@@ -97,8 +111,8 @@ public class MazeAnalysis {
 	 * @param horizontal indique si le passage est horizontal ou vertical
 	 */
 	private void findPassages(int colStart, int rowStart, boolean horizontal) {
-		for(int row = rowStart; row < rowCount; row+= 2) {//Attention si 2 out of bounds => exception ?
-			for(int col = colStart; col < colCount; col+=2) {
+		for(int row = rowStart; row < rowCount - 1; row+= 2) {//Attention si 2 out of bounds => exception ?
+			for(int col = colStart; col < colCount - 1; col+=2) {
 				if(getRGBAtCoordinates(col,row) == Color.WHITE.getRGB()) {
 					registerPassage(col, row, horizontal);
 				}
@@ -113,8 +127,8 @@ public class MazeAnalysis {
 	 * @param horizontal indique si le passage est horizontal ou vertical
 	 */
 	private void registerPassage(int col, int row, boolean horizontal) {
-		Cell cellSource = horizontal ? new Cell(col, row-1) : new Cell(col-1, row);
-		Cell cellTarget = horizontal ? new Cell(col, row+1) : new Cell(col+1, row);
+		Cell cellSource = horizontal ? new Cell(col-1, row) : new Cell(col, row-1);
+		Cell cellTarget = horizontal ? new Cell(col+1, row) : new Cell(col, row+1);
 		this.mazeGraph.addEdge(rooms.get(cellSource), rooms.get(cellTarget));
 	}
 	
@@ -141,14 +155,26 @@ public class MazeAnalysis {
 	}
 	
 	/**
+	 * Trouve l'arbre couvrant de poids minimal du labyrinthe à partir de son entrée.
+	 */
+	private void findSpanningTree() {
+		var primAlg = new PrimMinimumSpanningTree<Integer, DefaultEdge>(mazeGraph);
+		this.spanTree = primAlg.getSpanningTree(1);
+		for(var edge : spanTree.getEdges()) {
+			this.spanTreeVertices.add(mazeGraph.getEdgeSource(edge));
+			this.spanTreeVertices.add(mazeGraph.getEdgeTarget(edge));
+		}
+	}
+	
+	/**
 	 * Determines if the maze is perfect.
 	 * 
 	 * @return true if the maze is perfect, false otherwise
 	 */
 	public boolean isPerfect() {
-		// TODO
-		return false;
+		return isConnected() && !hasCycles();
 	}
+	
 
 	/**
 	 * Determines if all the rooms in the maze are interconnected.
@@ -156,8 +182,7 @@ public class MazeAnalysis {
 	 * @return true if connected, false otherwide
 	 */
 	public boolean isConnected() {
-		// TODO
-		return false;
+		return spanTreeVertices.size() == mazeGraph.vertexSet().size();
 	}
 	
 	/**
@@ -167,18 +192,25 @@ public class MazeAnalysis {
 	 * @return true if connected + cycles, false otherwise
 	 */
 	public boolean isConnectedWithCycles() {
-		// TODO
-		return false;
+		return isConnected() && hasCycles();
 	}
-
+	
+	/**
+	 * Détermine si le labyrinthe a des cycles.
+	 * @return vrai si le labyrinthe a des cycles, sinon faux
+	 */
+	private boolean hasCycles() {
+		return mazeGraph.edgeSet().size() - mazeGraph.vertexSet().size() + 1 > 0;
+	}
+	
 	/**
 	 * Determines if the exit is reachable from the entry.
 	 * 
 	 * @return true if exit is reachable, false otherwise
 	 */
 	public boolean isExitReachable() {
-		// TODO
-		return false;
+		Cell exit = new Cell(colCount-2, rowCount-2);
+		return spanTreeVertices.contains(rooms.get(exit));
 	}
 	
 	/**
@@ -200,42 +232,20 @@ public class MazeAnalysis {
 			this.y = y;
 		}
 		
-		/**
-		 * Retourne les coordonnées horizontale et verticale de la case.
-		 * @return les coordonnées horizontale et verticale de la case
-		 */
-		public int[] getPos() {
-			return new int[] {x,y};
-		}
-	}
-	
-	/**
-	 * Définit un passage entre deux cases du labyrinthe.
-	 * @author hendr
-	 *
-	 */
-	private class Passage{
-		private Cell a;
-		private Cell b;
-		
-		/**
-		 * Construit un passage à partir de deux cases du labyrinthe.
-		 * @param a la première case
-		 * @param b la deuxième case
-		 */
-		public Passage(Cell a, Cell b) {
-			this.a = a;
-			this.b = b;
+		@Override
+		public boolean equals(Object obj) {
+			if(obj == null) throw new NullPointerException();
+			if(!(obj instanceof Cell)) return false;
+			Cell cell = (Cell) obj;
+			return this.x == cell.x && this.y == cell.y;
 		}
 		
-		/**
-		 * Retourne les deux cases reliés par le passage.
-		 * @return les deux cases reliés par le passage
-		 */
-		public Cell[] getCells() {
-			return new Cell[] {a,b};
+		@Override
+		public int hashCode() {
+			return Integer.hashCode(x) * Integer.hashCode(y);
 		}
 	}
+
 	
 	/**
 	 * MAIN - Examples
