@@ -50,14 +50,18 @@ public class PrimMinimumSpanningTree<V extends Comparable<? super V>, E> impleme
 	@Override
 	public SpanningTree<E> getSpanningTree() {
 		var spanningForest = new TempTree();
+		//Initialisation du 'pool' de sommets à explorer (mis à jour au fur et à mesure de la création de l'arbre)
+		//Nécessaire pour que la méthode getSpanningTree(V vertex) sache quels sommets explorer
 		initForestVertices();
 
+		//Tant qu'il y a des sommets à explorer
 		while(!this.forestVertices.isEmpty()) {
 			var vertex = this.forestVertices.iterator().next();
 			var spanningTree = getSpanningTree(vertex);
 			spanningForest.addAllEdges(spanningTree.getEdges(),spanningTree.getWeight());
 		}
 
+		//Remise à null du 'pool' de sommet à explorer
 		teardownForestVertices();
 		return new SpanningTreeImpl<>(spanningForest.getEdges(), spanningForest.getWeight());
 	}
@@ -85,11 +89,14 @@ public class PrimMinimumSpanningTree<V extends Comparable<? super V>, E> impleme
 	 * @param startVertex first vertex of the SPT
 	 */
 	public SpanningTree<E> getSpanningTree(V startVertex) {
+		//Validation du sommet et lancement d'exception si nécessaire
 		checkStartVertex(startVertex);
 		initRemainingVertices();
+		//Initialisation d'un objet intermédiaire pour pouvoir ajouter les arêtes au fur et à mesure
 		var spanningTree = new TempTree();
 		useVertex(startVertex);
 		if(this.graph.degreeOf(startVertex) > 0) {
+			//Initialisation des arêtes disponibles depuis le sommet de départ
 			var availableEdges = initAvailableEdges(startVertex);
 			buildSpanningTree(startVertex, availableEdges, spanningTree);
 		}
@@ -98,6 +105,7 @@ public class PrimMinimumSpanningTree<V extends Comparable<? super V>, E> impleme
 	
 	/**
 	 * Initialise les ensembles de sommets utilisés & non utilisés.
+	 * Si appelé par getSpanningTree(), reprendra les sommets utilisés & non-utilisés de la création de la forêt
 	 */
 	private void initRemainingVertices() {
 		if(this.forestVertices != null && this.usedForestVertices != null) {
@@ -129,7 +137,10 @@ public class PrimMinimumSpanningTree<V extends Comparable<? super V>, E> impleme
 	 */
 	private void buildSpanningTree(V startVertex, SortedSet<E> availableEdges, TempTree spanningTree) {
 		while(!(availableEdges.isEmpty() || this.remainingVertices.isEmpty())){
+			//On récupère le premier élément du SortedSet qui est donc l'arête de poids minimal
 			E minWeightEdge = availableEdges.first();
+			//Si l'arête est valide (un sommet déjà dans l'arbre, l'autre pas encore), 
+			//on l'ajoute à l'arbre, sinon on la retire des arêtes disponibles
 			if(edgeIsValid(minWeightEdge)) {
 				updateSpanningTree(minWeightEdge, availableEdges, spanningTree);
 			}else {
@@ -146,8 +157,11 @@ public class PrimMinimumSpanningTree<V extends Comparable<? super V>, E> impleme
 	 * @param totalWeight le poids de l'arbre couvrant
 	 */
 	private void updateSpanningTree(E minWeightEdge, SortedSet<E> availableEdges, TempTree spanningTree) {
+		//Ajout de l'arête à l'arbre
 		spanningTree.addEdge(minWeightEdge, this.graph.getEdgeWeight(minWeightEdge));
 		availableEdges.remove(minWeightEdge);
+		//Identification du sommet cible (qui n'était pas encore dans l'arbre) pour
+		//ajouter ses arêtes au 'pool' des arêtes disponibles 
 		V target = getActualTarget(minWeightEdge);
 		availableEdges.addAll(this.graph.edgesOf(target));
 		useVertex(target);
@@ -349,14 +363,11 @@ public class PrimMinimumSpanningTree<V extends Comparable<? super V>, E> impleme
 		PrimMinimumSpanningTree<Integer, DefaultWeightedEdge> prim1 = new PrimMinimumSpanningTree<>(g1);
 		SpanningTree<DefaultWeightedEdge> spt1 = prim1.getSpanningTree(1);
 
-		for(int i = 1; i <= 8; ++i ) {
-			spt1 = prim1.getSpanningTree(i);
-			System.out.printf("\nSommet de départ %d", i);
-			System.out.println("\nArbre couvrant de poids minimal");
-			System.out.println("  poids total : "+(int)(spt1.getWeight()*10)/10.0);
-			System.out.println("  arêtes : "+spt1.getEdges().size());
-			System.out.printf("  temps écoulé = %.2f secondes\n", (System.currentTimeMillis() - time) / 1000.0);
-		}
+		System.out.println("\nArbre couvrant de poids minimal");
+		System.out.println("  poids total : "+(int)(spt1.getWeight()*10)/10.0);
+		System.out.println("  arêtes : "+spt1.getEdges().size());
+		System.out.printf("  temps écoulé = %.2f secondes\n", (System.currentTimeMillis() - time) / 1000.0);
+
 		/*
 		 * Exemple 2 - Graphe aléatoire
 		 */
