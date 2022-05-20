@@ -170,7 +170,7 @@ public class Adfgvx {
 		text = text.toUpperCase();
 		char[] textArray = text.toCharArray();
 		//Utilisation d'un stringbuilder pour avoir une taille max
-		StringBuilder sb = new StringBuilder(textArray.length);
+		StringBuilder sb = new StringBuilder(textArray.length);//Stream à la place d'un StringBuilder ??
 		for(int i = 0; i < textArray.length; ++i) {
 			char carac = textArray[i];
 			if(charInRange(carac,'A','Z') || charInRange(carac,'0','9')) {

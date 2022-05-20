@@ -14,6 +14,8 @@ import org.jgrapht.graph.SimpleWeightedGraph;
 public class PrimMinimumSpanningTree<V, E> implements SpanningTreeAlgorithm<E>{
 
 	private Graph<V,E> graph;
+	private Set<V> forestVertices;
+	private Set<V> usedForestVertices;
 	private Set<V> remainingVertices;
 	private Set<V> usedVertices;
 	/**
@@ -24,8 +26,10 @@ public class PrimMinimumSpanningTree<V, E> implements SpanningTreeAlgorithm<E>{
 	public PrimMinimumSpanningTree(Graph<V, E> graph) {
 		validateGraph(graph);
 		this.graph = graph;
-		this.remainingVertices = new HashSet<V>(graph.vertexSet());
-		this.usedVertices = new HashSet<V>();
+		this.forestVertices = null;
+		this.usedForestVertices = null;
+		this.remainingVertices = null;
+		this.usedVertices = null;
 	}
 	
 	/**
@@ -43,19 +47,34 @@ public class PrimMinimumSpanningTree<V, E> implements SpanningTreeAlgorithm<E>{
 	 * weighted undirected graph.
 	 */
 	@Override
-	public SpanningTree<E> getSpanningTree() {//Admet graphe non-connexe => qd arbre fini, cherche si y'en a pas d'autres pr faire une foret
-		/*Tant qu'il y a des vertex dans le remainingVertices, faire getSpanningTree(vertex) 
-		 * et en faire une collection de SpanningTree=> Retour un SpanningTree et pas plusieurs ???
-		 * 
-		 * */
+	public SpanningTree<E> getSpanningTree() {
 		var spanningForest = new TempTree();
-		
-		while(!this.remainingVertices.isEmpty()) {
-			var vertex = this.remainingVertices.iterator().next();
+		initForestVertices();
+
+		while(!this.forestVertices.isEmpty()) {
+			var vertex = this.forestVertices.iterator().next();
 			var spanningTree = getSpanningTree(vertex);
 			spanningForest.addAllEdges(spanningTree.getEdges(),spanningTree.getWeight());
 		}
+
+		teardownForestVertices();
 		return new SpanningTreeImpl<>(spanningForest.getEdges(), spanningForest.getWeight());
+	}
+	
+	/**
+	 * Initialise les ensembles de sommets de la forêt.
+	 */
+	private void initForestVertices() {
+		this.forestVertices = new HashSet<V>(graph.vertexSet());
+		this.usedForestVertices = new HashSet<V>();
+	}
+	
+	/**
+	 * Détruit les ensembles de sommets de la forêt.
+	 */
+	private void teardownForestVertices() {
+		this.forestVertices = null;
+		this.usedForestVertices = null;
 	}
 	
 	/**
@@ -64,16 +83,29 @@ public class PrimMinimumSpanningTree<V, E> implements SpanningTreeAlgorithm<E>{
 	 * 
 	 * @param startVertex first vertex of the SPT
 	 */
-	public SpanningTree<E> getSpanningTree(V startVertex) {//Admet pas graphe connexe, cherche juste arbre couvrant àpd de sommet
+	public SpanningTree<E> getSpanningTree(V startVertex) {
 		checkStartVertex(startVertex);
+		initRemainingVertices();
 		var spanningTree = new TempTree();
 		useVertex(startVertex);
 		if(this.graph.degreeOf(startVertex) > 0) {
 			var availableEdges = initAvailableEdges(startVertex);
 			buildSpanningTree(startVertex, availableEdges, spanningTree);
 		}
-		//Quid de graphe connexe ou pas ? Déterminer qd on a ts les sommets d'une partie connexe
 		return new SpanningTreeImpl<>(spanningTree.getEdges(),spanningTree.getWeight());
+	}
+	
+	/**
+	 * Initialise les ensembles de sommets utilisés & non utilisés.
+	 */
+	private void initRemainingVertices() {
+		if(this.forestVertices != null && this.usedForestVertices != null) {
+			this.remainingVertices = this.forestVertices;
+			this.usedVertices = this.usedForestVertices;
+		}else {
+			this.remainingVertices = new HashSet<V>(graph.vertexSet());
+			this.usedVertices = new HashSet<V>();
+		}
 	}
 	
 	/**
@@ -315,11 +347,15 @@ public class PrimMinimumSpanningTree<V, E> implements SpanningTreeAlgorithm<E>{
 		time = System.currentTimeMillis();
 		PrimMinimumSpanningTree<Integer, DefaultWeightedEdge> prim1 = new PrimMinimumSpanningTree<>(g1);
 		SpanningTree<DefaultWeightedEdge> spt1 = prim1.getSpanningTree(1);
-		System.out.println("\nArbre couvrant de poids minimal");
-		System.out.println("  poids total : "+(int)(spt1.getWeight()*10)/10.0);
-		System.out.println("  arêtes : "+spt1.getEdges().size());
-		System.out.printf("  temps écoulé = %.2f secondes\n", (System.currentTimeMillis() - time) / 1000.0);
-		
+
+		for(int i = 1; i <= 8; ++i ) {
+			spt1 = prim1.getSpanningTree(i);
+			System.out.printf("\nSommet de départ %d", i);
+			System.out.println("\nArbre couvrant de poids minimal");
+			System.out.println("  poids total : "+(int)(spt1.getWeight()*10)/10.0);
+			System.out.println("  arêtes : "+spt1.getEdges().size());
+			System.out.printf("  temps écoulé = %.2f secondes\n", (System.currentTimeMillis() - time) / 1000.0);
+		}
 		/*
 		 * Exemple 2 - Graphe aléatoire
 		 */
@@ -387,10 +423,10 @@ public class PrimMinimumSpanningTree<V, E> implements SpanningTreeAlgorithm<E>{
 		g.setEdgeWeight(g.addEdge(5, 6), 3);
 		
 		// Ajout d'une deuxième composante connexe
-//		g.addVertex(7);
-//		g.addVertex(8);
-//		g.setEdgeWeight(g.addEdge(7, 8), 2);
-//		
+		g.addVertex(7);
+		g.addVertex(8);
+		g.setEdgeWeight(g.addEdge(7, 8), 2);
+		
 		return g;
 	}
 
