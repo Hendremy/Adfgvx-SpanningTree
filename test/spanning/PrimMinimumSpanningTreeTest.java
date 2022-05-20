@@ -39,19 +39,95 @@ public class PrimMinimumSpanningTreeTest {
 		assertEquals(6, spt.getEdges().size());
 		assertEquals(12.0, spt.getWeight(), 0.001);
 	}
+	
+	@Test
+	void getSpanningTreeMultipleTimes() {
+		SimpleWeightedGraph<Integer, DefaultWeightedEdge> g = createSimpleWeightedGraph();
+		PrimMinimumSpanningTree<Integer, DefaultWeightedEdge> prim = new PrimMinimumSpanningTree<>(g);
+		SpanningTree<DefaultWeightedEdge> spt = prim.getSpanningTree();
+		spt = prim.getSpanningTree();
+		spt = prim.getSpanningTree();		
+		assertNotNull(spt);
+		assertEquals(6, spt.getEdges().size());
+		assertEquals(12.0, spt.getWeight(), 0.001);
+	}
+	
+	@Test
+	void graphWithoutEdgesSpanningTree() {
+		SimpleWeightedGraph<Integer, DefaultWeightedEdge> g = createNoEdgeGraph();
+		PrimMinimumSpanningTree<Integer, DefaultWeightedEdge> prim = new PrimMinimumSpanningTree<>(g);
+		SpanningTree<DefaultWeightedEdge> spt = prim.getSpanningTree();
+		assertNotNull(spt);
+		assertEquals(0, spt.getEdges().size());
+		assertEquals(0, spt.getWeight(), 0.001);
+	}
+	
+	@Test
+	void emptyGraphSpanningTree() {
+		SimpleWeightedGraph<Integer, DefaultWeightedEdge> g = createEmptyGraph();
+		PrimMinimumSpanningTree<Integer, DefaultWeightedEdge> prim = new PrimMinimumSpanningTree<>(g);
+		SpanningTree<DefaultWeightedEdge> spt = prim.getSpanningTree();
+		assertNotNull(spt);
+		assertEquals(0, spt.getEdges().size());
+		assertEquals(0, spt.getWeight(), 0.001);
+	}
 
 	/*
 	 * SPANNING TREE FROM SPECIFIC NODE TESTS
 	 */
 	@Test
-	void testGetSpanningTreeV() {
+	void testGetSpanningTreeFromVertex() {
 		SimpleWeightedGraph<Integer, DefaultWeightedEdge> g = createSimpleWeightedGraph();
 		PrimMinimumSpanningTree<Integer, DefaultWeightedEdge> prim = new PrimMinimumSpanningTree<>(g);
 		SpanningTree<DefaultWeightedEdge> spt = prim.getSpanningTree(1);
 		assertNotNull(spt);
 		assertEquals(5, spt.getEdges().size());
 		assertEquals(10.0, spt.getWeight(), 0.001);
-	}	
+	}
+	
+	@Test
+	void getSpanningTreeFromAllVertices() {
+		SimpleWeightedGraph<Integer, DefaultWeightedEdge> g = createSimpleWeightedGraph();
+		PrimMinimumSpanningTree<Integer, DefaultWeightedEdge> prim = new PrimMinimumSpanningTree<>(g);
+		SpanningTree<DefaultWeightedEdge> spt = prim.getSpanningTree(1);
+		
+		for(int i = 1; i < 7; ++i) {
+			spt = prim.getSpanningTree(i);
+			assertNotNull(spt);
+			assertEquals(5, spt.getEdges().size());
+			assertEquals(10.0, spt.getWeight(), 0.001);
+		}
+		for(int i = 7; i < 9 ; ++i) {
+			spt = prim.getSpanningTree(i);
+			assertNotNull(spt);
+			assertEquals(1, spt.getEdges().size());
+			assertEquals(2, spt.getWeight(), 0.001);
+		}
+	}
+	
+	@Test
+	void getSpanningTreeVertexOutofGraph() {
+		SimpleWeightedGraph<Integer, DefaultWeightedEdge> g = createSimpleWeightedGraph();
+		PrimMinimumSpanningTree<Integer, DefaultWeightedEdge> prim = new PrimMinimumSpanningTree<>(g);
+		assertThrows(IllegalArgumentException.class, () -> prim.getSpanningTree(50));
+	}
+	
+	@Test
+	void getSpanningTreeNullVertex() {
+		SimpleWeightedGraph<Integer, DefaultWeightedEdge> g = createSimpleWeightedGraph();
+		PrimMinimumSpanningTree<Integer, DefaultWeightedEdge> prim = new PrimMinimumSpanningTree<>(g);
+		assertThrows(NullPointerException.class, () -> prim.getSpanningTree(null));
+	}
+	
+	@Test
+	void graphWithoutEdgesSpanningTreeFromVertex() {
+		SimpleWeightedGraph<Integer, DefaultWeightedEdge> g = createNoEdgeGraph();
+		PrimMinimumSpanningTree<Integer, DefaultWeightedEdge> prim = new PrimMinimumSpanningTree<>(g);
+		SpanningTree<DefaultWeightedEdge> spt = prim.getSpanningTree(1);
+		assertNotNull(spt);
+		assertEquals(0, spt.getEdges().size());
+		assertEquals(0, spt.getWeight(), 0.001);
+	}
 
 	/**
 	 * Creates a sample connected undirected weighted graph [MULLER example p.20]
@@ -87,4 +163,22 @@ public class PrimMinimumSpanningTreeTest {
 		
 		return g;
 	}
+	
+	public static SimpleWeightedGraph<Integer, DefaultWeightedEdge> createNoEdgeGraph() {
+		SimpleWeightedGraph<Integer, DefaultWeightedEdge> g = new SimpleWeightedGraph<>(DefaultWeightedEdge.class);
+		g.addVertex(1);
+		g.addVertex(2);
+		g.addVertex(3);
+		g.addVertex(4);
+		g.addVertex(5);
+		g.addVertex(6);
+		return g;
+	}
+	
+
+	public static SimpleWeightedGraph<Integer, DefaultWeightedEdge> createEmptyGraph() {
+		SimpleWeightedGraph<Integer, DefaultWeightedEdge> g = new SimpleWeightedGraph<>(DefaultWeightedEdge.class);
+		return g;
+	}
+	
 }

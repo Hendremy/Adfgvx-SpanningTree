@@ -31,6 +31,7 @@ public class MazeAnalysis {
 	 * @param image The bitmap image to analyze
 	 */
 	public MazeAnalysis(BufferedImage image) {
+		if(image == null) throw new NullPointerException();
 		this.image = image;
 		initMazeGrid();
 		this.mazeGraph = new SimpleGraph<>(DefaultEdge.class);
@@ -45,10 +46,19 @@ public class MazeAnalysis {
 	 */
 	private void initMazeGrid() {
 		this.cellHeight = getCellHeight(image);
+		checkCellHeight(cellHeight);
 		this.rowCount = image.getHeight() / cellHeight;
 		this.colCount = image.getWidth() / cellHeight;
 	}
 	
+	/**
+	 * Vérifie que la taille d'une case soit valide.
+	 * @param cellHeight la taille d'une case
+	 * @throws IllegalArgumentException si la taille de case est nulle ou négative
+	 */
+	private void checkCellHeight(int cellHeight) {
+		if(cellHeight <= 0) throw new IllegalArgumentException();
+	}
 	/**
 	 * Retourne la hauteur d'une pièce de labyrinthe à partir de son image.
 	 * @param image l'image du labyrinthe
@@ -196,7 +206,7 @@ public class MazeAnalysis {
 	}
 	
 	/**
-	 * Détermine si le labyrinthe a des cycles.
+	 * Détermine si le labyrinthe a des cycles. Le labyrinthe est considéré comme connexe.
 	 * @return vrai si le labyrinthe a des cycles, sinon faux
 	 */
 	private boolean hasCycles() {

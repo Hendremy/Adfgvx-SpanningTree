@@ -169,7 +169,7 @@ public class AdfgvxTest {
 		String message = "VDFXG-D";
 		String decrypted = "OUI";
 		Adfgvx cypher = new Adfgvx(substitutionKey, transpositionKey);
-		assertEquals(decrypted, cypher.decrypt(message).substring(0, decrypted.length()));
+		assertEquals(decrypted, cypher.decrypt(message));
 	}
 	
 	@Test
@@ -177,9 +177,9 @@ public class AdfgvxTest {
 		String substitutionKey = "BJLZ4PW7AUVI0H3Y5MK8FEXQGDO16T9NSR2C";
 		String transpositionKey = "BRUTES";
 		String message = "DFDGD-DXAXD-DVVXG-XAVDD-GDXXD-DDXDX-XGFGG-XFADX-FFFFG-DXDFF-GGDFG-XVFVX-FFFXV-FFFGX-XDGFG-ADXFD-XVVGV-VXDDA";
-		String decrypted = "ILNYAPASDEMAUVAISESOUBONNESITUATIONVOUSSAVEZ";
+		String decrypted = "ILNYAPASDEMAUVAISESOUBONNESITUATIONVOUSSAVEZC";
 		Adfgvx cypher = new Adfgvx(substitutionKey, transpositionKey);
-		assertEquals(decrypted, cypher.decrypt(message).substring(0, decrypted.length()));
+		assertEquals(decrypted, cypher.decrypt(message));
 	}
 	
 	@Test
@@ -192,5 +192,14 @@ public class AdfgvxTest {
 			cypher.decrypt(message);
 		});
 	}
-
+	
+	@Test
+	void decryptWithInvalidCharacters() {
+		String substitutionKey = "BJLZ4PW7AUVI0H3Y5MK8FEXQGDO16T9NSR2C";
+		String transpositionKey = "BRUTES";
+		String message = "ADFGV-X";
+		String decrypted = "L2U";
+		Adfgvx cypher = new Adfgvx(substitutionKey, transpositionKey);
+		assertEquals(decrypted, cypher.decrypt(message));
+	}
 }

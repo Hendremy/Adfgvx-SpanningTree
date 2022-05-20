@@ -347,7 +347,7 @@ public class Adfgvx {
 	 * @return le texte nettoyé
 	 */
 	private char[] cleanTextToDecrypt(String textToDecrypt) {
-		char[] cleanText = removeSeparators(textToDecrypt);
+		char[] cleanText = removeIllegalCharacters(textToDecrypt);
 		if(!textToDecryptIsValid(cleanText)) {
 			throw new IllegalArgumentException();
 		}
@@ -359,19 +359,29 @@ public class Adfgvx {
 	 * @param textToDecrypt le texte à déchiffré
 	 * @return le texte nettoyé des tirets séparateurs
 	 */
-	private char[] removeSeparators(String textToDecrypt) {
-		char[] textToClean = textToDecrypt.toCharArray();
-		int cleanTextSize = textToClean.length - (textToClean.length/6);
-		char[] cleanText = new char[cleanTextSize];
-		int cleanTextPos = 0;
-		for(int i = 0; i < textToClean.length; ++i) {
-			char carac = textToClean[i];
-			if(carac != '-') {
-				cleanText[cleanTextPos] = carac;
-				cleanTextPos++;
+	private char[] removeIllegalCharacters(String textToDecrypt) {
+		char[] text  = textToDecrypt.toCharArray();
+		char[] cleanText = new char[text.length];
+		int actualLength = 0;
+		for(int i = 0; i < text.length ; ++i) {
+			if(isInADFGVX(text[i])) {
+				cleanText[actualLength] = text[i];
+				actualLength++;
 			}
 		}
-		return cleanText;
+		return Arrays.copyOf(cleanText, actualLength);
+	}
+	
+	/**
+	 * Vérifie que le caractère soit parmi les lettres A,D,V,F,G,V et X.
+	 * @param carac le caractère à vérifier
+	 * @return vrai si le caractère est parmi les lettres A,D,V,F,G,V et X, faux sinon
+	 */
+	private boolean isInADFGVX(char carac) {
+		for(char letter : this.ADFGVX) {
+			if(letter == carac) return true;
+		}
+		return false;
 	}
 	
 	/**
@@ -440,9 +450,11 @@ public class Adfgvx {
 	private String invertSubstitute(char[] text) {
 		StringBuilder sb = new StringBuilder();
 		for(int i = 0; i < text.length; i += 2) {
-			char[] nextTwoChar = new char[] {text[i], text[i+1]};
-			String digram = new String(nextTwoChar);
-			sb.append(this.decryptMap.get(digram));
+			if(i + 1 < text.length) {
+				char[] nextTwoChar = new char[] {text[i], text[i+1]};
+				String digram = new String(nextTwoChar);
+				sb.append(this.decryptMap.get(digram));
+			}
 		}
 		return sb.toString();
 	}

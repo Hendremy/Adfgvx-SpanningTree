@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.SortedSet;
 import java.util.TreeSet;
 
 import org.jgrapht.Graph;
@@ -11,7 +12,7 @@ import org.jgrapht.alg.interfaces.SpanningTreeAlgorithm;
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.SimpleWeightedGraph;
 
-public class PrimMinimumSpanningTree<V, E> implements SpanningTreeAlgorithm<E>{
+public class PrimMinimumSpanningTree<V extends Comparable<? super V>, E> implements SpanningTreeAlgorithm<E>{
 
 	private Graph<V,E> graph;
 	private Set<V> forestVertices;
@@ -126,7 +127,7 @@ public class PrimMinimumSpanningTree<V, E> implements SpanningTreeAlgorithm<E>{
 	 * @param spanningTree l'arbre à construire
 	 * @param totalWeight le poids total de l'arbre à construire
 	 */
-	private void buildSpanningTree(V startVertex, TreeSet<E> availableEdges, TempTree spanningTree) {
+	private void buildSpanningTree(V startVertex, SortedSet<E> availableEdges, TempTree spanningTree) {
 		while(!(availableEdges.isEmpty() || this.remainingVertices.isEmpty())){
 			E minWeightEdge = availableEdges.first();
 			if(edgeIsValid(minWeightEdge)) {
@@ -144,7 +145,7 @@ public class PrimMinimumSpanningTree<V, E> implements SpanningTreeAlgorithm<E>{
 	 * @param spanningTree l'arbre couvrant
 	 * @param totalWeight le poids de l'arbre couvrant
 	 */
-	private void updateSpanningTree(E minWeightEdge, TreeSet<E> availableEdges, TempTree spanningTree) {
+	private void updateSpanningTree(E minWeightEdge, SortedSet<E> availableEdges, TempTree spanningTree) {
 		spanningTree.addEdge(minWeightEdge, this.graph.getEdgeWeight(minWeightEdge));
 		availableEdges.remove(minWeightEdge);
 		V target = getActualTarget(minWeightEdge);
@@ -167,9 +168,9 @@ public class PrimMinimumSpanningTree<V, E> implements SpanningTreeAlgorithm<E>{
 	 * @param startVertex
 	 * @return
 	 */
-	private TreeSet<E> initAvailableEdges(V startVertex){
+	private SortedSet<E> initAvailableEdges(V startVertex){
 		var edgeComp = new EdgeComparator<E>(this.graph);
-		TreeSet<E> availableEdges = new TreeSet<E>(edgeComp);
+		SortedSet<E> availableEdges = new TreeSet<E>(edgeComp);
 		availableEdges.addAll(this.graph.edgesOf(startVertex));
 		return availableEdges;
 	}
