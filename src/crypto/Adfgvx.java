@@ -321,10 +321,23 @@ public class Adfgvx {
 			String colToString = new String(column);
 			cypheredText.append(colToString);
 		}
-		for(int i = separatorNb; i > 0; --i) {
-			cypheredText.insert(5*i, '-');
+		return addSeparators(cypheredText.toString());
+	}
+	
+	/**
+	 * Ajoute le symbole séparateur entre chaque groupe de 5 caractères du texte.
+	 * @param text le texte qu'il faut séparer en bloc de 5 caractères
+	 */
+	private String addSeparators(String text) {
+		final int offset = 5;
+		StringBuilder sb = new StringBuilder();
+		int startIndex;
+		for(startIndex = 0; startIndex < text.length() - offset; startIndex += offset) {
+			sb.append(text.substring(startIndex, startIndex + offset));
+			sb.append("-");
 		}
-		return cypheredText.toString();
+		sb.append(text.substring(startIndex, text.length()));
+		return sb.toString();
 	}
 
 	/**

@@ -129,6 +129,16 @@ public class AdfgvxTest {
 		assertEquals(encrypted, cypher.encrypt(message));
 	}
 	
+	@Test
+	void encryptTextSmallerThanOddLengthTranspositionKey() {
+		String substitutionKey = "BJLZ4PW7AUVI0H3Y5MK8FEXQGDO16T9NSR2C";
+		String transpositionKey = "BRUTE";
+		String message = "OUI";
+		String encrypted ="VXDXF-XGXDX";
+		Adfgvx cypher = new Adfgvx(substitutionKey, transpositionKey);
+		assertEquals(encrypted, cypher.encrypt(message));
+	}
+	
 	/*
 	 * DECRYPT TESTS
 	 */
